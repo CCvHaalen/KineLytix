@@ -1,0 +1,26 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+  }
+  
+  #video-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  /* Ensure the video scales well */
+  #video {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* The canvas overlays the video for annotations */
+  #overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* Ensure the canvas covers the video fully */
+    pointer-events: auto;
+  }
+  
