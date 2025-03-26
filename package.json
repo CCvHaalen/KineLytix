@@ -11,5 +11,10 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^35.0.1"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-scripts": "^5.0.1"
   }
 }
