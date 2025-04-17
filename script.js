@@ -21,6 +21,34 @@ const state = {
   currentVideoIndex: -1
 }
 
+const data = [
+  {
+    ID:"",
+    Name:"",
+    Test:"",
+    Angle:"",
+    Date: ""
+
+ },];
+
+ const btnDownloadCsv = document.getElementById('btnDownloadCsv');
+       
+       btnDownloadCsv.addEventListener("click",()=>{
+         downloadCsv("results.csv", json2csv.parse(data));
+       });
+       
+       function downloadCsv(filename, csvData) {
+          const element= document.createElement("a");
+
+          element.setAttribute("href",`data:text/csv;charset=utf-8,${csvData}`);
+          element.setAttribute("download", filename);
+          element.style.display = "none";
+
+          document.body.appendChild(element);
+          element.click();
+          document.body.removeChild(element);
+       };
+
 function init() {
   setupEventListeners();
   setupDragAndDrop();

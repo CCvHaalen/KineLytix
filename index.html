@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Angle Measurement App</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/json2csv"></script>
+  <div class="app-container">
+    <div id="sidebar" class="sidebar">
+      <h2>Video Library</h2>
+      
+      <div class="drop-area-container">
+        <div class="drop-area" id="dropArea">
+          <div class="drop-instructions">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Drop video files here</p>
+            <p class="small-text">(mp4, mov, webm)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="video-list-header">
+        <h3>Imported Videos</h3>
+      </div>
+
+      <ul id="videoList" class="video-list"></ul>
+
+      <input type="file" id="videoFile" accept="video/mp4,video/quicktime,video/webm" multiple hidden />
+    </div>
+
+    <div class="main-content">
+      <h1>Video Angle Measurement App</h1>
+      <div id="video-container">
+        <div id="placeholder-message">
+          Select a video from the sidebar to begin
+        </div>
+        <video id="video" controls></video>
+        <canvas id="overlay"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="activateAnnotation" class="btn primary">Measure Angle</button>
+        <button id="clearAnnotation" class="btn">Clear Annotation</button>
+        <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
+        <div id="result" class="result-display"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
