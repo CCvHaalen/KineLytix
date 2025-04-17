@@ -220,12 +220,12 @@ h2 {
   padding: 40px;
 }
 
-#placeholder-message::before {
+/* #placeholder-message::before {
   content: "→";
   font-size: 2rem;
   margin-bottom: 10px;
   transform: rotate(-90deg);
-}
+} */
 
 #video {
   position: relative;
