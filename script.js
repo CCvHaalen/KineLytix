@@ -8,7 +8,9 @@ const elements = {
   activateBtn: document.getElementById('activateAnnotation'),
   clearBtn: document.getElementById('clearAnnotation'),
   result: document.getElementById('result'),
-  placeholder: document.getElementById('placeholder-message')
+  placeholder: document.getElementById('placeholder-message'),
+  saveFrameBtn: document.getElementById('saveFrame'),
+  frameBar: document.getElementById('frameBar'),
 };
 
 
@@ -21,15 +23,7 @@ const state = {
   currentVideoIndex: -1
 }
 
-const data = [
-  {
-    ID:"",
-    Name:"",
-    Test:"",
-    Angle:"",
-    Date: ""
-
- },];
+const data = [];
 
  const btnDownloadCsv = document.getElementById('btnDownloadCsv');
        
@@ -52,7 +46,9 @@ const data = [
 function init() {
   setupEventListeners();
   setupDragAndDrop();
+  createAddFrameTile();
 }
+
 
 function setupEventListeners() {
   elements.dropArea.addEventListener('click', () => {
@@ -69,6 +65,8 @@ function setupEventListeners() {
   
   elements.canvas.addEventListener('click', handleCanvasClick);
   
+  elements.saveFrameBtn.addEventListener('click', saveFrame);
+
   window.addEventListener('resize', resizeCanvasToVideo);
 }
 
@@ -204,7 +202,12 @@ function activateAnnotationMode() {
 
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
+  elements.canvas.classList.add('active');
+
   elements.result.textContent = "Click on the video to place 3 points and measure an angle";
+
+  elements.saveFrameBtn.style.display = 'inline-block';
+  elements.activateBtn.disabled = true;
 }
 
 function clearAnnotations() {
@@ -213,6 +216,9 @@ function clearAnnotations() {
   elements.result.textContent = "";
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
   elements.video.style.pointerEvents = "auto";
+  elements.canvas.classList.remove('active');
+  elements.saveFrameBtn.style.display = 'none';
+  elements.activateBtn.disabled = false;
 }
 
 function handleCanvasClick(event) {
@@ -234,6 +240,7 @@ function handleCanvasClick(event) {
     const angleDeg = calculateAngle(absPoints[0], absPoints[1], absPoints[2]);
     elements.result.textContent = `Measured angle: ${angleDeg.toFixed(1)}°`;
     state.annotationActive = false;
+    state.lastAngle = angleDeg;
   } else {
     elements.result.textContent = `Point ${state.points.length} placed. Add ${3 - state.points.length} more point${state.points.length === 2 ? '' : 's'}.`;
   }
@@ -350,5 +357,37 @@ function calculateAngle(p1, p2, p3) {
   const cosTheta = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
   return Math.acos(cosTheta) * (180 / Math.PI);
 }
+
+let addTile;
+function createAddFrameTile() {
+  addTile = document.createElement('div');
+  addTile.className = 'add-frame-btn';
+  addTile.textContent = 'Add Frame';
+  addTile.addEventListener('click', activateAnnotationMode);
+  elements.frameBar.appendChild(addTile);
+}
+
+function saveFrame() {
+  const w = elements.canvas.width, 
+        h = elements.canvas.height;
+  const tmp = document.createElement('canvas');
+  tmp.width = w; 
+  tmp.height = h;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(elements.video, 0, 0, w, h);
+  tctx.drawImage(elements.canvas, 0, 0, w, h);
+
+  const item = document.createElement('div');
+  item.className = 'frame-item';
+  const thumb = document.createElement('img');
+  thumb.src = tmp.toDataURL();
+  item.appendChild(thumb);
+
+  elements.frameBar.insertBefore(item, addTile);
+
+  clearAnnotations();
+}
+
+
 
 init();

@@ -246,9 +246,13 @@ h2 {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: auto;
+  pointer-events: none;
   display: none;
-  /* z-index: 2; */
+  z-index: 2;
+}
+
+#overlay.active {
+  pointer-events: auto;
 }
 
 .controls {
@@ -293,5 +297,54 @@ h2 {
   display: flex;
   align-items: center;
   font-weight: 500;
+}
+
+.frame-bar {
+  display: flex;
+  align-items: center; 
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px;
+  background: #eceff1;
+  margin-top: 12px;
+}
+
+.frame-item {
+  position: relative;
+  max-width: 160px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.frame-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-frame-btn {
+  max-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #f1f3f5;
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.add-frame-btn:hover {
+  background-color: #f1f3f5;
+  color: #3498db;
+  border-color: #3498db;
 }
   

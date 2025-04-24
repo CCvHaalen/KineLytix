@@ -15,7 +15,7 @@ const createWindow = () => {
         show: false,
     });
 
-    mainWindow.loadFile('public/index.html')
+    mainWindow.loadFile('index.html')
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
     });
