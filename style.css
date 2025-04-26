@@ -347,4 +347,70 @@ h2 {
   color: #3498db;
   border-color: #3498db;
 }
+
+.frame-jump-button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #3498db;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.frame-jump-button:hover {
+  background-color: #2980b9;
+}
+
+.frame-bar {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.frame-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.frame-item img {
+  width: 120px;
+  height: auto;
+  border-radius: 4px;
+}
+
+.frame-jump-button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #3498db;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.frame-jump-button:hover {
+  background-color: #2980b9;
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#speedSlider {
+  width: 150px;
+}
+
+#speedValue {
+  min-width: 40px;
+  text-align: center;
+}
   

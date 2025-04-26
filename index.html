@@ -51,8 +51,15 @@
         <button id="activateAnnotation" class="btn primary">Measure Angle</button>
         <button id="clearAnnotation" class="btn">Clear Annotation</button>
         <button id="saveFrame" class="btn" style="display:none">Save Frame</button>
+        <button id="saveAngle" class="btn" style="display:none;">Save Angle</button>
+        <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button>
         <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
         <div id="result" class="result-display"></div>
+        <div class="speed-control">
+          <label for="speedSlider">Speed:</label>
+          <input type="range" id="speedSlider" min="0.25" max="4" step="0.05" value="1">
+          <span id="speedValue">1x</span>
+        </div>
       </div>
     </div>
 

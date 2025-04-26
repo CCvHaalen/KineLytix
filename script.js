@@ -10,7 +10,9 @@ const elements = {
   result: document.getElementById('result'),
   placeholder: document.getElementById('placeholder-message'),
   saveFrameBtn: document.getElementById('saveFrame'),
+  saveAngleBtn: document.getElementById('saveAngle'),
   frameBar: document.getElementById('frameBar'),
+  hoveredAngle: null,
 };
 
 
@@ -20,8 +22,11 @@ const state = {
   annotationActive: false,
   points: [],
   videoFiles: [],
-  currentVideoIndex: -1
-}
+  currentVideoIndex: -1,
+  angles: [],
+  selectedAngle: null,
+  hoveredAngle: null,
+};
 
 const data = [];
 
@@ -47,6 +52,14 @@ function init() {
   setupEventListeners();
   setupDragAndDrop();
   createAddFrameTile();
+  elements.speedSlider = document.getElementById('speedSlider');
+  elements.speedValue = document.getElementById('speedValue');
+
+  elements.speedSlider.addEventListener('input', () => {
+  const speed = parseFloat(elements.speedSlider.value);
+  elements.video.playbackRate = speed;
+  elements.speedValue.textContent = speed.toFixed(2) + 'x';
+});
 }
 
 
@@ -67,7 +80,15 @@ function setupEventListeners() {
   
   elements.saveFrameBtn.addEventListener('click', saveFrame);
 
+  elements.saveAngleBtn.addEventListener('click', saveAngle);
+
   window.addEventListener('resize', resizeCanvasToVideo);
+
+  elements.video.addEventListener('timeupdate', checkAndRenderAngles);
+
+  document.getElementById('deleteSelectedAngle').addEventListener('click', deleteSelectedAngle);
+
+  elements.canvas.addEventListener('mousemove', handleCanvasMouseMove);
 }
 
 function setupDragAndDrop() {
@@ -172,6 +193,14 @@ function selectVideo(index) {
   elements.video.style.display = 'block';
   elements.placeholder.style.display = 'none';
   clearAnnotations();
+
+  document.querySelectorAll('.frame-item').forEach(item => {
+    if (parseInt(item.dataset.videoIndex) === state.currentVideoIndex) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
 }
 
 function handleVideoLoaded() {
@@ -190,6 +219,32 @@ function resizeCanvasToVideo() {
   }
 }
 
+function checkAndRenderAngles() {
+  ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+
+  const currentTime = elements.video.currentTime;
+  const matchingAngles = state.angles.filter(a => Math.abs(a.time - currentTime) < 0.2);
+
+  matchingAngles.forEach(angleObj => {
+    if (state.selectedAngle === angleObj.id) {
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 3;
+    } else if (state.hoveredAngle === angleObj.id) {
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 2;
+    } else {
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 2;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(angleObj.points[0].x, angleObj.points[0].y);
+    ctx.lineTo(angleObj.points[1].x, angleObj.points[1].y);
+    ctx.lineTo(angleObj.points[2].x, angleObj.points[2].y);
+    ctx.stroke();
+  });
+}
+
 function activateAnnotationMode() {
   if (state.currentVideoIndex === -1) {
     elements.result.textContent = "Please select a video first";
@@ -199,6 +254,8 @@ function activateAnnotationMode() {
   
   state.annotationActive = true;
   state.points = [];
+
+  elements.saveAngleBtn.style.display = 'inline-block';
 
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
@@ -222,30 +279,54 @@ function clearAnnotations() {
 }
 
 function handleCanvasClick(event) {
-  if (!state.annotationActive) return;
-  
-  const rect = elements.canvas.getBoundingClientRect();
- 
-  const xRel = (event.clientX - rect.left) / rect.width;
-  const yRel = (event.clientY - rect.top) / rect.height;
-  
-  state.points.push({ xRel, yRel });
-  
-  if (state.points.length === 3) {
-    const absPoints = state.points.map(p => ({
-      x: p.xRel * elements.canvas.width,
-      y: p.yRel * elements.canvas.height
-    }));
-    
-    const angleDeg = calculateAngle(absPoints[0], absPoints[1], absPoints[2]);
-    elements.result.textContent = `Measured angle: ${angleDeg.toFixed(1)}°`;
-    state.annotationActive = false;
-    state.lastAngle = angleDeg;
-  } else {
-    elements.result.textContent = `Point ${state.points.length} placed. Add ${3 - state.points.length} more point${state.points.length === 2 ? '' : 's'}.`;
-  }
+  if (state.annotationActive) {
+    const rect = elements.canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
+    const y = (event.clientY - rect.top) * (elements.canvas.height / elements.canvas.clientHeight);
 
-  drawAnnotations();
+    state.points.push({ x, y });
+
+    if (state.points.length > 3) {
+      state.points.shift();
+    }
+
+    drawPointsAndLines();
+  } else if (state.hoveredAngle) {
+    state.selectedAngle = state.hoveredAngle;
+    elements.result.textContent = "Angle selected. Click 'Delete Selected Angle' to remove.";
+    document.getElementById('deleteSelectedAngle').style.display = 'inline-block';
+    checkAndRenderAngles();
+  } else {
+    state.selectedAngle = null;
+    elements.result.textContent = '';
+    document.getElementById('deleteSelectedAngle').style.display = 'none';
+    checkAndRenderAngles();
+  }
+}
+
+function drawPointsAndLines() {
+  ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+
+  if (state.points.length >= 1) {
+    ctx.beginPath();
+    ctx.arc(state.points[0].x, state.points[0].y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+  }
+  if (state.points.length >= 2) {
+    ctx.beginPath();
+    ctx.moveTo(state.points[0].x, state.points[0].y);
+    ctx.lineTo(state.points[1].x, state.points[1].y);
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  if (state.points.length === 3) {
+    ctx.beginPath();
+    ctx.moveTo(state.points[1].x, state.points[1].y);
+    ctx.lineTo(state.points[2].x, state.points[2].y);
+    ctx.stroke();
+  }
 }
 
 function drawAnnotations() {
@@ -348,14 +429,13 @@ function drawAngleArc(points, angleDeg) {
 }
 
 function calculateAngle(p1, p2, p3) {
-  const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
-  const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
-  const dot = v1.x * v2.x + v1.y * v2.y;
-  const mag1 = Math.sqrt(v1.x ** 2 + v1.y ** 2);
-  const mag2 = Math.sqrt(v2.x ** 2 + v2.y ** 2);
-  if (mag1 === 0 || mag2 === 0) return 0;
-  const cosTheta = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-  return Math.acos(cosTheta) * (180 / Math.PI);
+  const a = Math.hypot(p2.x - p3.x, p2.y - p3.y);
+  const b = Math.hypot(p1.x - p3.x, p1.y - p3.y);
+  const c = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+  if (a === 0 || b === 0) return NaN;
+
+  return Math.acos((a*a + b*b - c*c) / (2*a*b)) * (180/Math.PI);
 }
 
 let addTile;
@@ -368,10 +448,10 @@ function createAddFrameTile() {
 }
 
 function saveFrame() {
-  const w = elements.canvas.width, 
-        h = elements.canvas.height;
+  const w = elements.canvas.width;
+  const h = elements.canvas.height;
   const tmp = document.createElement('canvas');
-  tmp.width = w; 
+  tmp.width = w;
   tmp.height = h;
   const tctx = tmp.getContext('2d');
   tctx.drawImage(elements.video, 0, 0, w, h);
@@ -379,15 +459,134 @@ function saveFrame() {
 
   const item = document.createElement('div');
   item.className = 'frame-item';
+  item.dataset.videoIndex = state.currentVideoIndex;  // 👈 Save video index
+
   const thumb = document.createElement('img');
   thumb.src = tmp.toDataURL();
   item.appendChild(thumb);
 
-  elements.frameBar.insertBefore(item, addTile);
+  const button = document.createElement('button');
+  button.className = 'frame-jump-button';
+  const time = elements.video.currentTime;
+  button.textContent = `Jump to ${time.toFixed(2)}s`;
+  button.addEventListener('click', () => {
+    elements.video.currentTime = time;
+  });
+  item.appendChild(button);
 
+  elements.frameBar.insertBefore(item, elements.frameBar.lastElementChild);
   clearAnnotations();
 }
 
+function saveAngle() {
+  if (state.points.length !== 3) {
+    elements.result.textContent = "Please mark exactly 3 points before saving!";
+    return;
+  }
 
+  const [p1, p2, p3] = state.points;
+  const angle = calculateAngle(p1, p2, p3);
+
+  if (isNaN(angle)) {
+    elements.result.textContent = "Failed to calculate angle!";
+    return;
+  }
+
+  const time = elements.video.currentTime;
+
+  state.angles.push({ id: Date.now() + Math.random(), time, points: [...state.points], angle });
+
+  elements.result.textContent = `Saved angle: ${angle.toFixed(2)}° at ${time.toFixed(2)}s`;
+
+  state.points = [];
+  ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+
+  checkAndRenderAngles();
+}
+
+function drawSavedAngle(points) {
+  if (points.length < 3) return;
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  ctx.lineTo(points[1].x, points[1].y);
+  ctx.lineTo(points[2].x, points[2].y);
+  ctx.strokeStyle = 'green';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function selectAngleAtPosition(clickPoint) {
+  const currentTime = elements.video.currentTime;
+  const matchingAngles = state.angles.filter(a => Math.abs(a.time - currentTime) < 0.2);
+
+  for (let angleObj of matchingAngles) {
+    if (isPointNearAngle(clickPoint, angleObj.points)) {
+      state.selectedAngle = angleObj.id;
+      elements.result.textContent = `Angle: ${angleObj.angle.toFixed(2)}° (Click "Delete Selected" to remove)`;
+
+      document.getElementById('deleteSelectedAngle').style.display = 'inline-block'; // 🔥 Add this
+
+      checkAndRenderAngles();
+      return;
+    }
+  }
+
+  state.selectedAngle = null;
+  elements.result.textContent = '';
+
+  document.getElementById('deleteSelectedAngle').style.display = 'none'; // 🔥 Add this
+
+  checkAndRenderAngles();
+}
+
+function isPointNearAngle(click, points) {
+  const threshold = 10;
+
+  return points.some(p => {
+    const dx = p.x - click.x;
+    const dy = p.y - click.y;
+    return Math.sqrt(dx * dx + dy * dy) < threshold;
+  });
+}
+
+function deleteSelectedAngle() {
+  if (state.selectedAngle == null) return;
+
+  const idx = state.angles.findIndex(a => a.id === state.selectedAngle);
+  if (idx !== -1) {
+    state.angles.splice(idx, 1);
+  }
+
+  state.selectedAngle = null;
+  elements.result.textContent = '';
+
+  document.getElementById('deleteSelectedAngle').style.display = 'none';
+  checkAndRenderAngles();
+}
+
+function handleCanvasMouseMove(event) {
+  if (state.annotationActive) return; // Skip if measuring
+
+  const rect = elements.canvas.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
+  const y = (event.clientY - rect.top) * (elements.canvas.height / elements.canvas.clientHeight);
+
+  const currentTime = elements.video.currentTime;
+  const matchingAngles = state.angles.filter(a => Math.abs(a.time - currentTime) < 0.2);
+
+  let hovered = null;
+  for (const angleObj of matchingAngles) {
+    if (isPointNearAngle({ x, y }, angleObj.points)) {
+      hovered = angleObj.id;
+      break;
+    }
+  }
+
+  if (hovered !== state.hoveredAngle) {
+    state.hoveredAngle = hovered;
+    checkAndRenderAngles();
+  }
+}
 
 init();
