@@ -54,6 +54,11 @@ function downloadCsv(filename, csvData) {
   document.body.removeChild(element);
 }
 
+/**
+ * Initialization function
+ * Sets up event listeners, drag-and-drop functionality, a frame-adding tile, and a speed control slider that adjusts
+ * the video playback rate and displays the current speed.
+ */
 function init() {
   setupEventListeners();
   setupDragAndDrop();
