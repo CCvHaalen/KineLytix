@@ -73,7 +73,10 @@ function init() {
   });
 }
 
-
+/**
+ * Wires up all the necessary event listeners for UI interaction, including file import, video loading,
+ * annotation mode toggling, canvas interaction, saving frames/angles, window resizing, and deleting angles.
+ */
 function setupEventListeners() {
   elements.dropArea.addEventListener('click', () => {
     elements.videoFileInput.click();
