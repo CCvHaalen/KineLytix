@@ -185,6 +185,10 @@ function importVideos(files) {
   }
 }
 
+/**
+ * Refreshes the video list UI by clearing the current list, creating list items for each video file, marking the
+ * selected one as active, and adding click handlers to allow video selection.
+ */
 function updateVideoList() {
   elements.videoList.innerHTML = '';
   
