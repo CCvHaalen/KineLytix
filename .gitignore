@@ -1,6 +1,9 @@
 # IDE Settings
 .idea
 
+# Generated Files
+package-lock.json
+
 # Logs
 logs
 *.log
