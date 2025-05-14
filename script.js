@@ -30,23 +30,23 @@ const state = {
 
 const data = [];
 
- const btnDownloadCsv = document.getElementById('btnDownloadCsv');
-       
-       btnDownloadCsv.addEventListener("click",()=>{
-         downloadCsv("results.csv", json2csv.parse(data));
-       });
-       
-       function downloadCsv(filename, csvData) {
-          const element= document.createElement("a");
+const btnDownloadCsv = document.getElementById('btnDownloadCsv');
 
-          element.setAttribute("href",`data:text/csv;charset=utf-8,${csvData}`);
-          element.setAttribute("download", filename);
-          element.style.display = "none";
+btnDownloadCsv.addEventListener("click",()=>{
+  downloadCsv("results.csv", json2csv.parse(data));
+});
 
-          document.body.appendChild(element);
-          element.click();
-          document.body.removeChild(element);
-       };
+function downloadCsv(filename, csvData) {
+  const element= document.createElement("a");
+
+  element.setAttribute("href",`data:text/csv;charset=utf-8,${csvData}`);
+  element.setAttribute("download", filename);
+  element.style.display = "none";
+
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+};
 
 function init() {
   setupEventListeners();
@@ -59,7 +59,7 @@ function init() {
   const speed = parseFloat(elements.speedSlider.value);
   elements.video.playbackRate = speed;
   elements.speedValue.textContent = speed.toFixed(2) + 'x';
-});
+  });
 }
 
 
