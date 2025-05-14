@@ -105,6 +105,10 @@ function setupEventListeners() {
   elements.canvas.addEventListener('mousemove', handleCanvasMouseMove);
 }
 
+/**
+ * Enables drag-and-drop video file import by preventing default drag behaviors, visually indicating when a file is
+ * dragged over the drop zone, and importing video files when they are dropped.
+ */
 function setupDragAndDrop() {
   const dropTargets = [elements.sidebar, elements.dropArea];
   
