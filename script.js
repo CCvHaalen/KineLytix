@@ -36,6 +36,12 @@ btnDownloadCsv.addEventListener("click",()=>{
   downloadCsv("results.csv", json2csv.parse(data));
 });
 
+/**
+ * Creates a hidden download link for CSV data and programmatically clicks it to trigger a file download of the data
+ * Data must already by in CSV format
+ * @param {string} filename the name for the CSV file to be downloaded
+ * @param {string} csvData the string containing the CSV formatted data
+ */
 function downloadCsv(filename, csvData) {
   const element= document.createElement("a");
 
@@ -46,7 +52,7 @@ function downloadCsv(filename, csvData) {
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
-};
+}
 
 function init() {
   setupEventListeners();
