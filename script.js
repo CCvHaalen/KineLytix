@@ -159,6 +159,10 @@ function preventDefaults(e) {
   e.stopPropagation();
 }
 
+/**
+ * Converts selected file input into an array, imports the videos if any are selected, and then clears the input
+ * value to allow re-selection of the same file later.
+ */
 function handleFileImport() {
   const files = Array.from(this.files);
   if (files.length > 0) {
