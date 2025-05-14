@@ -149,6 +149,11 @@ function setupDragAndDrop() {
   });
 }
 
+/**
+ * Stops the browser’s default behavior and prevents the event from bubbling up the DOM,
+ * used to allow custom drag-and-drop handling.
+ * @param {event} e the event object
+ */
 function preventDefaults(e) {
   e.preventDefault();
   e.stopPropagation();
