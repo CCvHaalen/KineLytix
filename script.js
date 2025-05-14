@@ -171,6 +171,11 @@ function handleFileImport() {
   this.value = '';
 }
 
+/**
+ * Appends new video files to the application state, updates the displayed video list, and automatically selects
+ * the first video if none is currently selected.
+ * @param {array} files array of video file objects
+ */
 function importVideos(files) {
   state.videoFiles = [...state.videoFiles, ...files];
   updateVideoList();
