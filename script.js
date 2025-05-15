@@ -524,6 +524,13 @@ function drawAngleArc(points, angleDeg) {
   ctx.fillText(`${angleDeg.toFixed(1)}°`, labelX, labelY);
 }
 
+/**
+ * Uses the Law of Cosines to calculate the angle at point p2 formed by the triangle defined by p1, p2, and p3.
+ * @param {object} p1 Points with { x, y } coordinates that form an angle at p2
+ * @param {object} p2 Points with { x, y } coordinates that form an angle at p2
+ * @param {object} p3 Points with { x, y } coordinates that form an angle at p2
+ * @returns {number} A number representing the angle at p2 in degrees
+ */
 function calculateAngle(p1, p2, p3) {
   const a = Math.hypot(p2.x - p3.x, p2.y - p3.y);
   const b = Math.hypot(p1.x - p3.x, p1.y - p3.y);
