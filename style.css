@@ -417,19 +417,6 @@ h2 {
   border-radius: 4px;
 }
 
-/* (repeat) Frame jump button */
-.frame-jump-button {
-  margin-top: 5px;
-  padding: 5px 10px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  background-color: #3498db;
-  color: white;
-  transition: background-color 0.2s;
-}
-
 .frame-jump-button:hover {
   background-color: #2980b9;
 }
