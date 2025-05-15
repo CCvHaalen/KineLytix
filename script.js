@@ -579,6 +579,9 @@ function calculateAngle(p1, p2, p3) {
   return { inner, outer };
 }
 
+/**
+ * Displays either the inner or outer angle based on the current selection in state.showInnerAngle
+ */
 function renderAngleDisplay() {
   const [p1,p2,p3] = state.points;
   const { inner, outer } = calculateAngle(p1,p2,p3);
