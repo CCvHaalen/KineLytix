@@ -326,6 +326,10 @@ function activateAnnotationMode() {
   elements.activateBtn.disabled = true;
 }
 
+/**
+ * Exits annotation mode by clearing points and canvas drawings, resetting related UI elements, re-enabling video
+ * interaction, and restoring buttons to their default state
+ */
 function clearAnnotations() {
   state.points = [];
   state.annotationActive = false;
