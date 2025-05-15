@@ -683,6 +683,10 @@ function isPointNearAngle(click, points) {
   });
 }
 
+/**
+ * Deletes the currently selected angle from the saved angles list, clears the selection and UI messages, hides the
+ * delete button, and then redraws the remaining angles on the canvas
+ */
 function deleteSelectedAngle() {
   if (state.selectedAngle == null) return;
 
