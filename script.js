@@ -5,6 +5,7 @@ const elements = {
   videoList: document.getElementById('videoList'),
   video: document.getElementById('video'),
   canvas: document.getElementById('overlay'),
+  videoContainer: document.getElementById('video-container'),
   activateBtn: document.getElementById('activateAnnotation'),
   clearBtn: document.getElementById('clearAnnotation'),
   result: document.getElementById('result'),
@@ -15,8 +16,17 @@ const elements = {
   hoveredAngle: null,
 };
 
+elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
+elements.hoverDeleteBtn.addEventListener('click', () => {
+  if (state.hoveredAngle !== null) {
+    deleteSelectedAngle();
+  }
+  elements.hoverDeleteBtn.style.display = 'none';
+});
 
 const ctx = elements.canvas.getContext('2d');
+
+elements.toggleBtn = document.getElementById('toggleAngleType');
 
 const state = {
   annotationActive: false,
@@ -26,6 +36,7 @@ const state = {
   angles: [],
   selectedAngle: null,
   hoveredAngle: null,
+  showInnerAngle: true,
 };
 
 const data = [];
@@ -63,14 +74,39 @@ function init() {
   setupEventListeners();
   setupDragAndDrop();
   createAddFrameTile();
-  elements.speedSlider = document.getElementById('speedSlider');
-  elements.speedValue = document.getElementById('speedValue');
+  elements.speedSelect = document.getElementById('speedSelect');
+  elements.speedValue  = document.getElementById('speedValue');
 
-  elements.speedSlider.addEventListener('input', () => {
-  const speed = parseFloat(elements.speedSlider.value);
-  elements.video.playbackRate = speed;
-  elements.speedValue.textContent = speed.toFixed(2) + 'x';
-  });
+  elements.video.playbackRate = parseFloat(elements.speedSelect.value);
+
+  elements.speedSelect.addEventListener('change', () => {
+    const speed = parseFloat(elements.speedSelect.value);
+    elements.video.playbackRate = speed;
+    elements.speedValue.textContent = speed.toFixed(2) + 'x';
+});
+
+  elements.toggleBtn.style.display = 'inline-block';
+  elements.toggleBtn.addEventListener('click', () => {
+  state.showInnerAngle = !state.showInnerAngle;
+  elements.toggleBtn.textContent = state.showInnerAngle
+    ? 'Show Outer Angle'
+    : 'Show Inner Angle';
+
+  if (state.points.length === 3) {
+    renderAngleDisplay();
+    return;
+  }
+
+  const now = elements.video.currentTime;
+  const saved = state.angles.find(a => Math.abs(a.time - now) < 0.2);
+  if (saved) {
+    const { inner, outer } = calculateAngle(...saved.points);
+    const displayed = state.showInnerAngle ? inner : outer;
+    const label = state.showInnerAngle ? 'Inner' : 'Outer';
+    elements.result.textContent =
+      `${label} angle: ${displayed.toFixed(2)}° at ${saved.time.toFixed(2)}s`;
+  }
+});
 }
 
 /**
@@ -102,7 +138,8 @@ function setupEventListeners() {
 
   document.getElementById('deleteSelectedAngle').addEventListener('click', deleteSelectedAngle);
 
-  elements.canvas.addEventListener('mousemove', handleCanvasMouseMove);
+  elements.videoContainer.addEventListener('mousemove', handleCanvasMouseMove);
+
 }
 
 /**
@@ -532,13 +569,22 @@ function drawAngleArc(points, angleDeg) {
  * @returns {number} A number representing the angle at p2 in degrees
  */
 function calculateAngle(p1, p2, p3) {
-  const a = Math.hypot(p2.x - p3.x, p2.y - p3.y);
-  const b = Math.hypot(p1.x - p3.x, p1.y - p3.y);
-  const c = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+  const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+  const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+  const dot = v1.x * v2.x + v1.y * v2.y;
+  const mag1 = Math.hypot(v1.x, v1.y);
+  const mag2 = Math.hypot(v2.x, v2.y);
+  let inner = Math.acos(dot / (mag1 * mag2)) * (180 / Math.PI);
+  let outer = 360 - inner;
+  return { inner, outer };
+}
 
-  if (a === 0 || b === 0) return NaN;
-
-  return Math.acos((a*a + b*b - c*c) / (2*a*b)) * (180/Math.PI);
+function renderAngleDisplay() {
+  const [p1,p2,p3] = state.points;
+  const { inner, outer } = calculateAngle(p1,p2,p3);
+  const displayed = state.showInnerAngle ? inner : outer;
+  const label = state.showInnerAngle ? 'Inner' : 'Outer';
+  elements.result.textContent = `${label} angle: ${displayed.toFixed(1)}°`;
 }
 
 /**
@@ -570,7 +616,7 @@ function saveFrame() {
 
   const item = document.createElement('div');
   item.className = 'frame-item';
-  item.dataset.videoIndex = state.currentVideoIndex;  // 👈 Save video index
+  item.dataset.videoIndex = state.currentVideoIndex;
 
   const thumb = document.createElement('img');
   thumb.src = tmp.toDataURL();
@@ -600,22 +646,28 @@ function saveAngle() {
   }
 
   const [p1, p2, p3] = state.points;
-  const angle = calculateAngle(p1, p2, p3);
+  const { inner, outer } = calculateAngle(p1, p2, p3);
+  const displayed = state.showInnerAngle ? inner : outer;
 
-  if (isNaN(angle)) {
+  if (isNaN(displayed)) {
     elements.result.textContent = "Failed to calculate angle!";
     return;
   }
 
   const time = elements.video.currentTime;
 
-  state.angles.push({ id: Date.now() + Math.random(), time, points: [...state.points], angle });
+  state.angles.push({
+    id: Date.now() + Math.random(),
+    time,
+    points: [...state.points],
+    angle: displayed
+  });
 
-  elements.result.textContent = `Saved angle: ${angle.toFixed(2)}° at ${time.toFixed(2)}s`;
+  elements.result.textContent =
+    `Saved angle: ${displayed.toFixed(2)}° at ${time.toFixed(2)}s`;
 
   state.points = [];
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-
   checkAndRenderAngles();
 }
 
@@ -651,7 +703,7 @@ function selectAngleAtPosition(clickPoint) {
       state.selectedAngle = angleObj.id;
       elements.result.textContent = `Angle: ${angleObj.angle.toFixed(2)}° (Click "Delete Selected" to remove)`;
 
-      document.getElementById('deleteSelectedAngle').style.display = 'inline-block'; // 🔥 Add this
+      document.getElementById('deleteSelectedAngle').style.display = 'inline-block';
 
       checkAndRenderAngles();
       return;
@@ -661,7 +713,7 @@ function selectAngleAtPosition(clickPoint) {
   state.selectedAngle = null;
   elements.result.textContent = '';
 
-  document.getElementById('deleteSelectedAngle').style.display = 'none'; // 🔥 Add this
+  document.getElementById('deleteSelectedAngle').style.display = 'none';
 
   checkAndRenderAngles();
 }
@@ -708,7 +760,7 @@ function deleteSelectedAngle() {
  * @param {event} event Mouse event object from moving the mouse over the canvas
  */
 function handleCanvasMouseMove(event) {
-  if (state.annotationActive) return; // Skip if measuring
+  if (state.annotationActive) return;
 
   const rect = elements.canvas.getBoundingClientRect();
   const x = (event.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
@@ -729,6 +781,31 @@ function handleCanvasMouseMove(event) {
     state.hoveredAngle = hovered;
     checkAndRenderAngles();
   }
+
+  const overlay = elements.canvas;
+  const btn     = elements.hoverDeleteBtn;
+
+  if (state.annotationActive || state.hoveredAngle !== null) {
+    overlay.classList.add('active');
+  } else {
+    overlay.classList.remove('active');
+  }
+
+  if (state.hoveredAngle !== null) {
+    const angleObj = state.angles.find(a => a.id === state.hoveredAngle);
+    const p        = angleObj.points[1];
+
+    const rect    = overlay.getBoundingClientRect();
+    const xClient = rect.left + (p.x / overlay.width) * rect.width;
+    const yClient = rect.top  + (p.y / overlay.height) * rect.height;
+
+    btn.style.left    = `${xClient}px`;
+    btn.style.top     = `${yClient}px`;
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+  }
+
 }
 
 init();

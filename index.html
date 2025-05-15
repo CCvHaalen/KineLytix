@@ -43,6 +43,7 @@
         </div>
         <video id="video" controls></video>
         <canvas id="overlay"></canvas>
+        <button id="hoverDeleteBtn" class="delete-btn" style="display:none;">×</button>
       </div>
       <div id="frameBar" class="frame-bar">
         
@@ -50,14 +51,22 @@
       <div class="controls">
         <button id="activateAnnotation" class="btn primary">Measure Angle</button>
         <button id="clearAnnotation" class="btn">Clear Annotation</button>
+        <button id="toggleAngleType" class="btn" style="display:none">Show Outer Angle</button>
         <button id="saveFrame" class="btn" style="display:none">Save Frame</button>
         <button id="saveAngle" class="btn" style="display:none;">Save Angle</button>
         <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button>
         <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
         <div id="result" class="result-display"></div>
         <div class="speed-control">
-          <label for="speedSlider">Speed:</label>
-          <input type="range" id="speedSlider" min="0.25" max="4" step="0.05" value="1">
+          <label for="speedSelect">Speed:</label>
+          <select id="speedSelect">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+            </select>
           <span id="speedValue">1x</span>
         </div>
       </div>
