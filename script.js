@@ -245,6 +245,10 @@ function selectVideo(index) {
   });
 }
 
+/**
+ * Sets the canvas size to match the loaded video’s resolution, displays the canvas, and calls a function to adjust
+ * its layout accordingly
+ */
 function handleVideoLoaded() {
   elements.canvas.width = this.videoWidth;
   elements.canvas.height = this.videoHeight;
