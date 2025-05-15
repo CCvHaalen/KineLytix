@@ -666,6 +666,13 @@ function selectAngleAtPosition(clickPoint) {
   checkAndRenderAngles();
 }
 
+/**
+ * Checks if the click position is within 10 pixels of any of the given angle points, returning true if so,
+ * otherwise false
+ * @param {object} click Object with { x, y } coordinates representing a click position
+ * @param {array} points Array of point objects, each with { x, y } coordinates representing the angle's points.
+ * @returns {boolean} A boolean (true or false)
+ */
 function isPointNearAngle(click, points) {
   const threshold = 10;
 
