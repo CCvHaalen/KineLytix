@@ -541,6 +541,10 @@ function calculateAngle(p1, p2, p3) {
   return Math.acos((a*a + b*b - c*c) / (2*a*b)) * (180/Math.PI);
 }
 
+/**
+ * Creates a clickable “Add Frame” button, assigns it an event to activate annotation mode when clicked, and appends
+ * it to the frame bar in the UI.
+ */
 let addTile;
 function createAddFrameTile() {
   addTile = document.createElement('div');
