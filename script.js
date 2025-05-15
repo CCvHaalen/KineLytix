@@ -209,6 +209,12 @@ function updateVideoList() {
   });
 }
 
+/**
+ * Validates the index, updates the current video state, highlights the selected list item, loads and displays the
+ * chosen video via a blob URL, hides the placeholder, clears any existing annotations, and shows frame items only for
+ * the selected video while hiding others.
+ * @param {integer} index the position of the video in state.videoFiles to select
+ */
 function selectVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
 
