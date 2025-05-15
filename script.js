@@ -269,6 +269,11 @@ function resizeCanvasToVideo() {
   }
 }
 
+/**
+ * clears the canvas, finds all angle annotations whose timestamp is within 0.2 seconds of the video’s current time,
+ * and then draws each angle with a colored stroke—red if selected, orange if hovered, or green otherwise—connecting
+ * its three defined points.
+ */
 function checkAndRenderAngles() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
