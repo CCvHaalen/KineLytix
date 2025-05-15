@@ -433,6 +433,13 @@ function drawAnnotations() {
   }
 }
 
+/**
+ * Draws a labeled point on the canvas using concentric circles with different styles and places a number at its
+ * center to indicate its order or identifier
+ * @param {number} x X-coordinate of the point on the canvas
+ * @param {number} y Y-coordinate of the point on the canvas
+ * @param {number} number Label number to display inside the point
+ */
 function drawPoint(x, y, number) {
   ctx.fillStyle = 'rgba(52, 152, 219, 0.6)';
   ctx.beginPath();
