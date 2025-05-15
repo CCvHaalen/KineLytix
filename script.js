@@ -256,6 +256,10 @@ function handleVideoLoaded() {
   resizeCanvasToVideo();
 }
 
+/**
+ * resizes the canvas to match the actual resolution and on-screen size of the video element, ensuring proper alignment
+ * for overlays or annotations.
+ */
 function resizeCanvasToVideo() {
   if (elements.video.videoWidth > 0 && elements.video.style.display !== 'none') {
     elements.canvas.width = elements.video.videoWidth;
