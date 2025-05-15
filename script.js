@@ -374,6 +374,10 @@ function handleCanvasClick(event) {
   }
 }
 
+/**
+ * Clears the canvas and then draws red circles for the first point and blue lines connecting the first to second
+ * points, and second to third points if those points exist, visually helping the user place and see the angle points.
+ */
 function drawPointsAndLines() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
