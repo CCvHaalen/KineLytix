@@ -458,6 +458,11 @@ function drawPoint(x, y, number) {
   ctx.fillText(number.toString(), x, y);
 }
 
+/**
+ * Draws a blue line with a width of 2 pixels connecting two given points on the canvas
+ * @param {object} p1 First point with { x, y } coordinates
+ * @param {object} p2 Second point with { x, y } coordinates
+ */
 function drawLine(p1, p2) {
   ctx.strokeStyle = '#3498db';
   ctx.lineWidth = 2;
