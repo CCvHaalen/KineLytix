@@ -403,6 +403,10 @@ function drawPointsAndLines() {
   }
 }
 
+/**
+ * Clears the canvas, converts relative point coordinates to absolute positions, draws each point and connecting lines,
+ * and if three points are present, calculates and draws the measured angle arc.
+ */
 function drawAnnotations() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
   
