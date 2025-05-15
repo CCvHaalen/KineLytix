@@ -619,6 +619,11 @@ function saveAngle() {
   checkAndRenderAngles();
 }
 
+/**
+ * Draws a green angle line (in the shape of a "V") connecting three saved points on the canvas, representing a
+ * previously saved angle annotation.
+ * @param {array} points Array of 3 point objects, each with x and y coordinates.
+ */
 function drawSavedAngle(points) {
   if (points.length < 3) return;
 
