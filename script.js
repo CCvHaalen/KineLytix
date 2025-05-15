@@ -554,6 +554,10 @@ function createAddFrameTile() {
   elements.frameBar.appendChild(addTile);
 }
 
+/**
+ * Captures the current video frame along with any canvas drawings, creates a thumbnail preview with a jump button for
+ * that moment, and adds it to the frame bar. It then clears any active annotations.
+ */
 function saveFrame() {
   const w = elements.canvas.width;
   const h = elements.canvas.height;
