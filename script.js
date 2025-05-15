@@ -589,6 +589,10 @@ function saveFrame() {
   clearAnnotations();
 }
 
+/**
+ * Saves an angle annotation defined by 3 clicked points on the canvas at the current video timestamp. It validates
+ * input, calculates the angle, stores it, updates the UI with feedback, and redraws annotations.
+ */
 function saveAngle() {
   if (state.points.length !== 3) {
     elements.result.textContent = "Please mark exactly 3 points before saving!";
