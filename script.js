@@ -341,6 +341,13 @@ function clearAnnotations() {
   elements.activateBtn.disabled = false;
 }
 
+/**
+ * When annotation mode is active, this function translates the click into canvas coordinates, adds the point to the
+ * annotation array (keeping only the latest three), and redraws the helper points and lines. Otherwise, it handles
+ * selection or deselection of existing angles—updating the selected angle state, showing/hiding the delete button,
+ * and re-rendering angles accordingly.
+ * @param {event} event the mouse click even on the canvas
+ */
 function handleCanvasClick(event) {
   if (state.annotationActive) {
     const rect = elements.canvas.getBoundingClientRect();
