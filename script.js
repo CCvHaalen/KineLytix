@@ -636,6 +636,12 @@ function drawSavedAngle(points) {
   ctx.stroke();
 }
 
+/**
+ * Checks if the user clicked near any saved angle on the current video frame. If so, it selects that angle, updates
+ * the UI to show info and a delete button; otherwise, it clears the selection and hides the delete button, then
+ * redraws the annotations.
+ * @param {object} clickPoint Object with { x, y } coordinates representing the user's click position on the canvas
+ */
 function selectAngleAtPosition(clickPoint) {
   const currentTime = elements.video.currentTime;
   const matchingAngles = state.angles.filter(a => Math.abs(a.time - currentTime) < 0.2);
