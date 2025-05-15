@@ -4,17 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Angle Measurement App</title>
+  <!-- linking the main CSS file -->
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+  <!-- script for CSV export (json2csv) -->
   <script src="https://cdn.jsdelivr.net/npm/json2csv"></script>
+
   <div class="app-container">
+    <!-- left sidebar -->
     <div id="sidebar" class="sidebar">
       <h2>Video Library</h2>
-      
+
+      <!-- area for dragging + dropping videos -->
       <div class="drop-area-container">
         <div class="drop-area" id="dropArea">
           <div class="drop-instructions">
+            <!-- upload icon -->
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
@@ -26,28 +32,39 @@
         </div>
       </div>
 
+      <!-- shows list of imported videos -->
       <div class="video-list-header">
         <h3>Imported Videos</h3>
       </div>
 
+      <!-- this is where video entries will be added -->
       <ul id="videoList" class="video-list"></ul>
 
+      <!-- hidden input for uploading multiple videos -->
       <input type="file" id="videoFile" accept="video/mp4,video/quicktime,video/webm" multiple hidden />
     </div>
 
+    <!-- main panel on the right -->
     <div class="main-content">
       <h1>Video Angle Measurement App</h1>
+
+      <!-- video player area -->
       <div id="video-container">
         <div id="placeholder-message">
           Select a video from the sidebar to begin
         </div>
         <video id="video" controls></video>
         <canvas id="overlay"></canvas>
+        <!-- shows up on hover when deleting -->
         <button id="hoverDeleteBtn" class="delete-btn" style="display:none;">×</button>
       </div>
+
+      <!-- timeline thumbnails go here -->
       <div id="frameBar" class="frame-bar">
-        
+
       </div>
+
+      <!-- buttons for interacting with annotations etc. -->
       <div class="controls">
         <button id="activateAnnotation" class="btn primary">Measure Angle</button>
         <button id="clearAnnotation" class="btn">Clear Annotation</button>
@@ -56,7 +73,11 @@
         <button id="saveAngle" class="btn" style="display:none;">Save Angle</button>
         <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button>
         <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
+
+        <!-- shows angle result after measurement -->
         <div id="result" class="result-display"></div>
+
+        <!-- control for playback speed -->
         <div class="speed-control">
           <label for="speedSelect">Speed:</label>
           <select id="speedSelect">
@@ -72,6 +93,7 @@
       </div>
     </div>
 
+    <!-- main JS logic -->
   <script src="./script.js"></script>
 </body>
 </html>
