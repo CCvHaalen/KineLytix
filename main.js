@@ -1,5 +1,4 @@
 const { app, BrowserWindow } = require('electron') // import electron modules
-const path = require('path') // built-in node module, not used here actually
 
 const createWindow = () => {
     // create a new browser window
