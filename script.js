@@ -702,6 +702,11 @@ function deleteSelectedAngle() {
   checkAndRenderAngles();
 }
 
+/**
+ * Tracks the mouse position over the canvas and checks if it’s near any angle points for the current video time;
+ * if so, updates the hovered angle state and triggers a redraw to visually highlight the hovered angle
+ * @param {event} event Mouse event object from moving the mouse over the canvas
+ */
 function handleCanvasMouseMove(event) {
   if (state.annotationActive) return; // Skip if measuring
 
