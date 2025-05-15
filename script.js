@@ -270,7 +270,7 @@ function resizeCanvasToVideo() {
 }
 
 /**
- * clears the canvas, finds all angle annotations whose timestamp is within 0.2 seconds of the video’s current time,
+ * Clears the canvas, finds all angle annotations whose timestamp is within 0.2 seconds of the video’s current time,
  * and then draws each angle with a colored stroke—red if selected, orange if hovered, or green otherwise—connecting
  * its three defined points.
  */
@@ -300,6 +300,10 @@ function checkAndRenderAngles() {
   });
 }
 
+/**
+ * Activates annotation mode by disabling video interaction, clearing previous data, enabling UI controls for saving
+ * angles and frames, and guiding the user to place three points on the canvas to measure an angle
+ */
 function activateAnnotationMode() {
   if (state.currentVideoIndex === -1) {
     elements.result.textContent = "Please select a video first";
