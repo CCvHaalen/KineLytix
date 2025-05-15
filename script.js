@@ -472,6 +472,12 @@ function drawLine(p1, p2) {
   ctx.stroke();
 }
 
+/**
+ * Calculates the direction of the angle at the middle point (p2) between three points and draws a red arc
+ * representing the angle, then labels it with the angle's degree value.
+ * @param {array} points Array of three point objects { x, y }, defining the angle
+ * @param {number} angleDeg The calculated angle in degrees to display
+ */
 function drawAngleArc(points, angleDeg) {
   const arcRadius = 40;
   const p1 = points[0];
