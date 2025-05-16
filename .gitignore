@@ -51,6 +51,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+cover/
 
 # Translations
 *.mo
@@ -61,8 +62,10 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/ # Ignore uploaded media files
-static_root/ # Ignore collected static files (if used)
+media/
+/media/ 
+static_root/
+/static_root/ 
 
 # Environments
 .env
@@ -72,6 +75,31 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+Lib/
+Scripts/
+Include/
+include/
+local/
+/Lib/
+/Scripts/
+/Include/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Secrets
+secrets.json
+*.key
+credentials.*
+
+# Other
+.DS_Store
+Thumbs.db
 
 # IDE / Editor specific
 .idea/
