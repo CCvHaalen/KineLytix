@@ -1,6 +1,9 @@
 # TNO-Backend
 
 
+Use 
+python manage.py runserver to initialize the local server.
+
 
 ## Getting started
 
