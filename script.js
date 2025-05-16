@@ -1,3 +1,5 @@
+const { ipcRenderer } = require('electron');
+
 const elements = {
   sidebar: document.getElementById('sidebar'),
   dropArea: document.getElementById('dropArea'),
@@ -13,6 +15,12 @@ const elements = {
   saveAngleBtn: document.getElementById('saveAngle'),
   frameBar: document.getElementById('frameBar'),
   hoveredAngle: null,
+  toggleSidebar: document.getElementById('toggle-sidebar'),
+  toggleVideoLibraryBtn: document.getElementById('toggleVideoLibrary'),
+  toggleFileManagerBtn: document.getElementById('toggleFileManager'),
+  videoLibraryView: document.getElementById('video-library-view'),
+  fileManagerView: document.getElementById('file-manager-view'),
+  folderList: document.getElementById('folderList'),
 };
 
 
@@ -52,6 +60,7 @@ function init() {
   setupEventListeners();
   setupDragAndDrop();
   createAddFrameTile();
+  setupSidebarToggle();
   elements.speedSlider = document.getElementById('speedSlider');
   elements.speedValue = document.getElementById('speedValue');
 
@@ -59,9 +68,85 @@ function init() {
   const speed = parseFloat(elements.speedSlider.value);
   elements.video.playbackRate = speed;
   elements.speedValue.textContent = speed.toFixed(2) + 'x';
-});
+  });
+
+  testFetchData();
 }
 
+function setupSidebarToggle() {
+  elements.toggleVideoLibraryBtn.addEventListener('click', () => showView('video-library'));
+  elements.toggleFileManagerBtn.addEventListener('click', () => showView('file-manager'));
+}
+
+function showView(viewName) {
+  elements.videoLibraryView.classList.remove('active-view');
+  elements.fileManagerView.classList.remove('active-view');
+
+  elements.toggleVideoLibraryBtn.classList.remove('active');
+  elements.toggleFileManagerBtn.classList.remove('active');
+
+  if (viewName === 'video-library') {
+    elements.videoLibraryView.classList.add('active-view');
+    elements.toggleVideoLibraryBtn.classList.add('active');
+  } else if (viewName === 'file-manager') {
+    elements.fileManagerView.classList.add('active-view');
+    elements.toggleFileManagerBtn.classList.add('active');
+    
+    fetchFolders(); 
+
+  }
+}
+
+// FETCH FOLDERS FROM BACKEND
+async function fetchFolders() {
+  console.log('Renderer requesting folder data...');
+  try {
+      const result = await ipcRenderer.invoke('fetch-data', 'api/folders/');
+      console.log('Renderer received folder data:', result);
+      if (result.success) {
+          populateFolderList(result.data); 
+      } else {
+          console.error('Failed to fetch folders:', result.error);
+          elements.folderList.innerHTML = '<li>Error loading folders</li>';
+      }
+  } catch (error) {
+      console.error('IPC Error fetching folders:', error);
+      elements.folderList.innerHTML = '<li>Error loading folders</li>';
+  }
+}
+
+function populateFolderList(folders) {
+  elements.folderList.innerHTML = '';
+  if (!folders || folders.length === 0) {
+      elements.folderList.innerHTML = '<li>No folders found.</li>';
+      return;
+  }
+  folders.forEach(folder => {
+      const li = document.createElement('li');
+      li.textContent = folder.name || `Folder ${folder.id}`;
+      li.dataset.folderId = folder.id;
+      elements.folderList.appendChild(li);
+  });
+}
+
+
+
+// TEST FUNCTION TO FETCH DATA FROM BACKEND
+async function testFetchData() {
+  console.log('Renderer: Sending test request to main process...');
+  try {
+    const result = await ipcRenderer.invoke('fetch-data', 'api/videos/');
+    console.log('Renderer: Received response from main process:', result);
+
+    if (result.success) {
+      console.log('Renderer: Test fetch successful! Data:', result.data);
+    } else {
+      console.error('Renderer: Test fetch failed:', result.error);
+    }
+  } catch (error) {
+    console.error('Renderer: Error invoking IPC handler:', error);
+  }
+}
 
 function setupEventListeners() {
   elements.dropArea.addEventListener('click', () => {
@@ -191,7 +276,6 @@ function selectVideo(index) {
   elements.video.src = url;
   elements.video.load();
   elements.video.style.display = 'block';
-  elements.placeholder.style.display = 'none';
   clearAnnotations();
 
   document.querySelectorAll('.frame-item').forEach(item => {
@@ -459,7 +543,7 @@ function saveFrame() {
 
   const item = document.createElement('div');
   item.className = 'frame-item';
-  item.dataset.videoIndex = state.currentVideoIndex;  // 👈 Save video index
+  item.dataset.videoIndex = state.currentVideoIndex;  
 
   const thumb = document.createElement('img');
   thumb.src = tmp.toDataURL();
