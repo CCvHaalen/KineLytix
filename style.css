@@ -1,9 +1,11 @@
+/* Reset box sizing and remove default spacing */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* Basic body styles */
 body {
     display: flex;
     font-family: 'Segoe UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -12,8 +14,9 @@ body {
     height: 100vh;
     overflow: hidden;
     background-color: #f5f7fa;
-  }
+}
 
+/* Header styles */
 h1 {
   font-size: 1.8rem;
   margin-bottom: 20px;
@@ -26,10 +29,11 @@ h2 {
   color: #34495e;
 }
 
+/* Layout container */
 .app-container {
   display: flex;
   flex-grow: 1;
-  height: 100%;
+  height: 100%; /* vh & vw*/
   width: 100%;
 }
 
@@ -77,6 +81,8 @@ h2 {
   stroke: #000; 
 }
 
+/* Sidebar styles */
+
 .sidebar {
   width: 280px;
   background-color: #f8f9fa;
@@ -102,6 +108,20 @@ h2 {
   flex-direction: column;
 }
 
+.sidebar-view {
+  display: none; 
+  flex-grow: 1; 
+  padding: 15px; 
+  overflow-y: auto;
+  height: 100%;
+}
+
+.sidebar-view.active-view {
+  display: flex;
+  flex-direction: column;
+}
+
+
 .sidebar h2 {
   padding-bottom: 10px;
   border-bottom: 1px solid #dee2e6;
@@ -109,6 +129,7 @@ h2 {
   flex-shrink: 0;
 }
 
+/* Instructions in sidebar */
 .sidebar-instructions {
   padding: 15px 0;
   text-align: center;
@@ -116,14 +137,17 @@ h2 {
   font-size: 0.9rem;
 }
 
+/* Highlight drop zone when active */
 .sidebar.drop-zone {
   background-color: #e1f0fa;
 }
 
+/* Wrapper for file import */
 .file-import {
   margin: 15px 0;
 }
 
+/* Hide file input */
 #videoFileImport {
   width: 0.1px;
   height: 0.1px;
@@ -133,17 +157,20 @@ h2 {
   z-index: -1;
 }
 
+/* General drop zone style */
 .drop-zone {
   border: 2px dashed #3498db;
   background-color: #e1f0fa;
   transition: all 0.3s ease;
 }
 
+/* Container for drop area */
 .drop-area-container {
   margin: 15px 0;
   min-height: 120px;
 }
 
+/* Actual drop area box */
 .drop-area {
   border: 2px dashed #cedae0;
   border-radius: 8px;
@@ -159,16 +186,19 @@ h2 {
   cursor: pointer;
 }
 
+/* Hover state for drop area */
 .drop-area:hover {
   background-color: #e9ecef;
   border-color: #adbbc4;
 }
 
+/* Drop area when active */
 .drop-area.active {
   border-color: #3498db;
   background-color: #e1f0fa;
 }
 
+/* Inner content of drop instructions */
 .drop-instructions {
   display: flex;
   flex-direction: column;
@@ -177,27 +207,32 @@ h2 {
   padding: 10px;
 }
 
+/* Icon inside drop area */
 .upload-icon {
   color: #6c757d;
   margin-bottom: 12px;
 }
 
+/* Change icon color on hover/active */
 .drop-area:hover .upload-icon,
 .drop-area.active .upload-icon {
   color: #3498db;
 }
 
+/* Drop area text */
 .drop-area p {
   margin: 0;
   font-size: 15px;
 }
 
+/* Small helper text */
 .drop-area .small-text {
   font-size: 12px;
   margin-top: 4px;
   color: #8a9299;
 }
 
+/* List of imported videos */
 .video-list {
   list-style-type: none;
   overflow-y: auto;
@@ -205,6 +240,7 @@ h2 {
   margin-top: 10px;
 }
 
+/* Header above video list */
 .video-list-header {
   margin-top: 20px;
   padding-bottom: 10px;
@@ -217,6 +253,7 @@ h2 {
   margin: 0;
 }
 
+/* Each video item */
 .video-list li {
   padding: 12px 15px;
   border-radius: 4px;
@@ -230,17 +267,20 @@ h2 {
   transition: all 0.2s;
 }
 
+/* Hover state for video list item */
 .video-list li:hover {
   background-color: #f1f3f5;
   border-left-color: #94c2e9;
 }
 
+/* Selected video item */
 .video-list li.active {
   background-color: #e1f0fa;
   border-left-color: #3498db;
   font-weight: 500;
 }
 
+/* Empty list state */
 .video-list:empty {
   display: flex;
   justify-content: center;
@@ -250,10 +290,12 @@ h2 {
   font-style: italic;
 }
 
+/* Placeholder for empty list */
 .video-list:empty::before {
   content: "No videos imported yet";
 }
 
+/* Main content area */
 .main-content {
   flex-grow: 1;
   padding: 25px;
@@ -263,28 +305,42 @@ h2 {
   display: flex;
 }
 
+/* Video container */
 #video-container {
   position: relative;
   width: 100%;
-  max-height: 70vh;
+  max-height: 60vh;
   background-color: #e9ecef;
   border-radius: 8px;
   overflow: hidden;
 }
 
+/* Message to show before a video is loaded */
+#placeholder-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  text-align: center;
+  padding: 40px;
+}
+
+/* Video element */
 #video {
   position: relative;
   top: 0;
   left: 0;
-  width: 100%; 
-  height: 100%;
+  width: 100%;
+  height: auto;
   max-width: 100%;
-  max-height: 70vh;
-  display: block;
+  max-height: 70vh; /*60 vh*/
+  display: none; /*block*/
   border-radius: 4px;
   object-fit: contain;
 }
 
+/* Overlay on top of video */
 #overlay {
   position: absolute;
   top: 0;
@@ -295,10 +351,13 @@ h2 {
   /* background-color: #FF0000;  For debugging*/ 
 }
 
+/* Enable pointer events when overlay is active */
 #overlay.active {
   pointer-events: auto;
 }
 
+
+/* Controls at the bottom */
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -308,6 +367,7 @@ h2 {
   padding: 10px 0;
 }
 
+/* General button styling */
 .btn {
   padding: 8px 16px;
   border: none;
@@ -323,6 +383,7 @@ h2 {
   background-color: #dee2e6;
 }
 
+/* Primary button */
 .btn.primary {
   background-color: #3498db;
   color: white;
@@ -332,6 +393,7 @@ h2 {
   background-color: #2980b9;
 }
 
+/* Display result area */
 .result-display {
   flex: 1;
   padding: 8px 15px;
@@ -372,6 +434,7 @@ h2 {
   object-fit: cover;
 }
 
+/* Add-frame button */
 .add-frame-btn {
   max-width: 160px;
   display: flex;
@@ -394,6 +457,7 @@ h2 {
   border-color: #3498db;
 }
 
+/* Jump to frame button */
 .frame-jump-button {
   margin-top: 5px;
   padding: 5px 10px;
@@ -410,13 +474,23 @@ h2 {
   background-color: #2980b9;
 }
 
+/* Bar holding all frames */
 .frame-bar {
   display: flex;
-  overflow-x: auto;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 10px;
-  padding: 10px 0;
+  width: 100%;
+  height: 120px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px;
+  background: #eceff1;
+  margin-top: 12px;
+  flex-shrink: 0;
 }
 
+/* Frame item layout fixes */
 .frame-item {
   display: flex;
   flex-direction: column;
@@ -429,22 +503,11 @@ h2 {
   border-radius: 4px;
 }
 
-.frame-jump-button {
-  margin-top: 5px;
-  padding: 5px 10px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  background-color: #3498db;
-  color: white;
-  transition: background-color 0.2s;
-}
-
 .frame-jump-button:hover {
   background-color: #2980b9;
 }
 
+/* Playback speed control */
 .speed-control {
   display: flex;
   align-items: center;
@@ -458,6 +521,22 @@ h2 {
 #speedValue {
   min-width: 40px;
   text-align: center;
+}
+  /* Button to delete a frame */
+.delete-btn {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 10;
+  transform: translate(-50%, -50%);
 }
 
 /* File Manager Styling  */

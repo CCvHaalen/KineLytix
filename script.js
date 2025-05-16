@@ -7,6 +7,7 @@ const elements = {
   videoList: document.getElementById('videoList'),
   video: document.getElementById('video'),
   canvas: document.getElementById('overlay'),
+  videoContainer: document.getElementById('video-container'),
   activateBtn: document.getElementById('activateAnnotation'),
   clearBtn: document.getElementById('clearAnnotation'),
   result: document.getElementById('result'),
@@ -23,8 +24,17 @@ const elements = {
   folderList: document.getElementById('folderList'),
 };
 
+elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
+elements.hoverDeleteBtn.addEventListener('click', () => {
+  if (state.hoveredAngle !== null) {
+    deleteSelectedAngle();
+  }
+  elements.hoverDeleteBtn.style.display = 'none';
+});
 
 const ctx = elements.canvas.getContext('2d');
+
+elements.toggleBtn = document.getElementById('toggleAngleType');
 
 const state = {
   annotationActive: false,
@@ -34,43 +44,80 @@ const state = {
   angles: [],
   selectedAngle: null,
   hoveredAngle: null,
+  showInnerAngle: true,
 };
 
 const data = [];
 
- const btnDownloadCsv = document.getElementById('btnDownloadCsv');
-       
-       btnDownloadCsv.addEventListener("click",()=>{
-         downloadCsv("results.csv", json2csv.parse(data));
-       });
-       
-       function downloadCsv(filename, csvData) {
-          const element= document.createElement("a");
+const btnDownloadCsv = document.getElementById('btnDownloadCsv');
 
-          element.setAttribute("href",`data:text/csv;charset=utf-8,${csvData}`);
-          element.setAttribute("download", filename);
-          element.style.display = "none";
+btnDownloadCsv.addEventListener("click",()=>{
+  downloadCsv("results.csv", json2csv.parse(data));
+});
 
-          document.body.appendChild(element);
-          element.click();
-          document.body.removeChild(element);
-       };
+/**
+ * Creates a hidden download link for CSV data and programmatically clicks it to trigger a file download of the data
+ * Data must already by in CSV format
+ * @param {string} filename the name for the CSV file to be downloaded
+ * @param {string} csvData the string containing the CSV formatted data
+ */
+function downloadCsv(filename, csvData) {
+  const element= document.createElement("a");
 
+  element.setAttribute("href",`data:text/csv;charset=utf-8,${csvData}`);
+  element.setAttribute("download", filename);
+  element.style.display = "none";
+
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+/**
+ * Initialization function
+ * Sets up event listeners, drag-and-drop functionality, a frame-adding tile, and a speed control slider that adjusts
+ * the video playback rate and displays the current speed.
+ */
 function init() {
   setupEventListeners();
   setupDragAndDrop();
   createAddFrameTile();
   setupSidebarToggle();
-  elements.speedSlider = document.getElementById('speedSlider');
-  elements.speedValue = document.getElementById('speedValue');
+  testFetchData();
+  elements.speedSelect = document.getElementById('speedSelect');
+  elements.speedValue  = document.getElementById('speedValue');
 
+  elements.video.playbackRate = parseFloat(elements.speedSelect.value);
+
+  elements.speedSelect.addEventListener('change', () => {
+    const speed = parseFloat(elements.speedSelect.value);
+    elements.video.playbackRate = speed;
+    elements.speedValue.textContent = speed.toFixed(2) + 'x';
+  });
+  
   elements.speedSlider.addEventListener('input', () => {
   const speed = parseFloat(elements.speedSlider.value);
   elements.video.playbackRate = speed;
   elements.speedValue.textContent = speed.toFixed(2) + 'x';
-  });
+});
+  elements.toggleBtn.style.display = 'inline-block';
+  elements.toggleBtn.addEventListener('click', () => {
+    state.showInnerAngle = !state.showInnerAngle;
+    elements.toggleBtn.textContent = state.showInnerAngle ? 'Show Outer Angle' : 'Show Inner Angle';
+    if (state.points.length === 3) {
+    renderAngleDisplay();
+    return;
+    }
 
-  testFetchData();
+    const now = elements.video.currentTime;
+    const saved = state.angles.find(a => Math.abs(a.time - now) < 0.2);
+    if (saved) {
+      const { inner, outer } = calculateAngle(...saved.points);
+      const displayed = state.showInnerAngle ? inner : outer;
+      const label = state.showInnerAngle ? 'Inner' : 'Outer';
+      elements.result.textContent = `${label} angle: ${displayed.toFixed(1)}° at ${saved.time.toFixed(2)}s`;
+    }
+  });
 }
 
 function setupSidebarToggle() {
@@ -148,6 +195,7 @@ async function testFetchData() {
   }
 }
 
+
 function setupEventListeners() {
   elements.dropArea.addEventListener('click', () => {
     elements.videoFileInput.click();
@@ -173,9 +221,14 @@ function setupEventListeners() {
 
   document.getElementById('deleteSelectedAngle').addEventListener('click', deleteSelectedAngle);
 
-  elements.canvas.addEventListener('mousemove', handleCanvasMouseMove);
+  elements.videoContainer.addEventListener('mousemove', handleCanvasMouseMove);
+
 }
 
+/**
+ * Enables drag-and-drop video file import by preventing default drag behaviors, visually indicating when a file is
+ * dragged over the drop zone, and importing video files when they are dropped.
+ */
 function setupDragAndDrop() {
   const dropTargets = [elements.sidebar, elements.dropArea];
   
@@ -216,11 +269,20 @@ function setupDragAndDrop() {
   });
 }
 
+/**
+ * Stops the browser’s default behavior and prevents the event from bubbling up the DOM,
+ * used to allow custom drag-and-drop handling.
+ * @param {event} e the event object
+ */
 function preventDefaults(e) {
   e.preventDefault();
   e.stopPropagation();
 }
 
+/**
+ * Converts selected file input into an array, imports the videos if any are selected, and then clears the input
+ * value to allow re-selection of the same file later.
+ */
 function handleFileImport() {
   const files = Array.from(this.files);
   if (files.length > 0) {
@@ -229,6 +291,11 @@ function handleFileImport() {
   this.value = '';
 }
 
+/**
+ * Appends new video files to the application state, updates the displayed video list, and automatically selects
+ * the first video if none is currently selected.
+ * @param {array} files array of video file objects
+ */
 function importVideos(files) {
   state.videoFiles = [...state.videoFiles, ...files];
   updateVideoList();
@@ -238,6 +305,10 @@ function importVideos(files) {
   }
 }
 
+/**
+ * Refreshes the video list UI by clearing the current list, creating list items for each video file, marking the
+ * selected one as active, and adding click handlers to allow video selection.
+ */
 function updateVideoList() {
   elements.videoList.innerHTML = '';
   
@@ -258,6 +329,12 @@ function updateVideoList() {
   });
 }
 
+/**
+ * Validates the index, updates the current video state, highlights the selected list item, loads and displays the
+ * chosen video via a blob URL, hides the placeholder, clears any existing annotations, and shows frame items only for
+ * the selected video while hiding others.
+ * @param {integer} index the position of the video in state.videoFiles to select
+ */
 function selectVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
 
@@ -287,6 +364,10 @@ function selectVideo(index) {
   });
 }
 
+/**
+ * Sets the canvas size to match the loaded video’s resolution, displays the canvas, and calls a function to adjust
+ * its layout accordingly
+ */
 function handleVideoLoaded() {
   elements.canvas.width = this.videoWidth;
   elements.canvas.height = this.videoHeight;
@@ -294,6 +375,10 @@ function handleVideoLoaded() {
   resizeCanvasToVideo();
 }
 
+/**
+ * resizes the canvas to match the actual resolution and on-screen size of the video element, ensuring proper alignment
+ * for overlays or annotations.
+ */
 function resizeCanvasToVideo() {
   if (elements.video.videoWidth > 0 && elements.video.style.display !== 'none') {
     elements.canvas.width = elements.video.videoWidth;
@@ -303,6 +388,11 @@ function resizeCanvasToVideo() {
   }
 }
 
+/**
+ * Clears the canvas, finds all angle annotations whose timestamp is within 0.2 seconds of the video’s current time,
+ * and then draws each angle with a colored stroke—red if selected, orange if hovered, or green otherwise—connecting
+ * its three defined points.
+ */
 function checkAndRenderAngles() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
@@ -329,6 +419,10 @@ function checkAndRenderAngles() {
   });
 }
 
+/**
+ * Activates annotation mode by disabling video interaction, clearing previous data, enabling UI controls for saving
+ * angles and frames, and guiding the user to place three points on the canvas to measure an angle
+ */
 function activateAnnotationMode() {
   if (state.currentVideoIndex === -1) {
     elements.result.textContent = "Please select a video first";
@@ -351,6 +445,10 @@ function activateAnnotationMode() {
   elements.activateBtn.disabled = true;
 }
 
+/**
+ * Exits annotation mode by clearing points and canvas drawings, resetting related UI elements, re-enabling video
+ * interaction, and restoring buttons to their default state
+ */
 function clearAnnotations() {
   state.points = [];
   state.annotationActive = false;
@@ -362,6 +460,13 @@ function clearAnnotations() {
   elements.activateBtn.disabled = false;
 }
 
+/**
+ * When annotation mode is active, this function translates the click into canvas coordinates, adds the point to the
+ * annotation array (keeping only the latest three), and redraws the helper points and lines. Otherwise, it handles
+ * selection or deselection of existing angles—updating the selected angle state, showing/hiding the delete button,
+ * and re-rendering angles accordingly.
+ * @param {event} event the mouse click even on the canvas
+ */
 function handleCanvasClick(event) {
   if (state.annotationActive) {
     const rect = elements.canvas.getBoundingClientRect();
@@ -388,6 +493,10 @@ function handleCanvasClick(event) {
   }
 }
 
+/**
+ * Clears the canvas and then draws red circles for the first point and blue lines connecting the first to second
+ * points, and second to third points if those points exist, visually helping the user place and see the angle points.
+ */
 function drawPointsAndLines() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
@@ -413,6 +522,10 @@ function drawPointsAndLines() {
   }
 }
 
+/**
+ * Clears the canvas, converts relative point coordinates to absolute positions, draws each point and connecting lines,
+ * and if three points are present, calculates and draws the measured angle arc.
+ */
 function drawAnnotations() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
   
@@ -439,6 +552,13 @@ function drawAnnotations() {
   }
 }
 
+/**
+ * Draws a labeled point on the canvas using concentric circles with different styles and places a number at its
+ * center to indicate its order or identifier
+ * @param {number} x X-coordinate of the point on the canvas
+ * @param {number} y Y-coordinate of the point on the canvas
+ * @param {number} number Label number to display inside the point
+ */
 function drawPoint(x, y, number) {
   ctx.fillStyle = 'rgba(52, 152, 219, 0.6)';
   ctx.beginPath();
@@ -457,6 +577,11 @@ function drawPoint(x, y, number) {
   ctx.fillText(number.toString(), x, y);
 }
 
+/**
+ * Draws a blue line with a width of 2 pixels connecting two given points on the canvas
+ * @param {object} p1 First point with { x, y } coordinates
+ * @param {object} p2 Second point with { x, y } coordinates
+ */
 function drawLine(p1, p2) {
   ctx.strokeStyle = '#3498db';
   ctx.lineWidth = 2;
@@ -466,6 +591,12 @@ function drawLine(p1, p2) {
   ctx.stroke();
 }
 
+/**
+ * Calculates the direction of the angle at the middle point (p2) between three points and draws a red arc
+ * representing the angle, then labels it with the angle's degree value.
+ * @param {array} points Array of three point objects { x, y }, defining the angle
+ * @param {number} angleDeg The calculated angle in degrees to display
+ */
 function drawAngleArc(points, angleDeg) {
   const arcRadius = 40;
   const p1 = points[0];
@@ -512,16 +643,39 @@ function drawAngleArc(points, angleDeg) {
   ctx.fillText(`${angleDeg.toFixed(1)}°`, labelX, labelY);
 }
 
+/**
+ * Uses the Law of Cosines to calculate the angle at point p2 formed by the triangle defined by p1, p2, and p3.
+ * @param {object} p1 Points with { x, y } coordinates that form an angle at p2
+ * @param {object} p2 Points with { x, y } coordinates that form an angle at p2
+ * @param {object} p3 Points with { x, y } coordinates that form an angle at p2
+ * @returns {number} A number representing the angle at p2 in degrees
+ */
 function calculateAngle(p1, p2, p3) {
-  const a = Math.hypot(p2.x - p3.x, p2.y - p3.y);
-  const b = Math.hypot(p1.x - p3.x, p1.y - p3.y);
-  const c = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-
-  if (a === 0 || b === 0) return NaN;
-
-  return Math.acos((a*a + b*b - c*c) / (2*a*b)) * (180/Math.PI);
+  const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+  const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+  const dot = v1.x * v2.x + v1.y * v2.y;
+  const mag1 = Math.hypot(v1.x, v1.y);
+  const mag2 = Math.hypot(v2.x, v2.y);
+  let inner = Math.acos(dot / (mag1 * mag2)) * (180 / Math.PI);
+  let outer = 360 - inner;
+  return { inner, outer };
 }
 
+/**
+ * Displays either the inner or outer angle based on the current selection in state.showInnerAngle
+ */
+function renderAngleDisplay() {
+  const [p1,p2,p3] = state.points;
+  const { inner, outer } = calculateAngle(p1,p2,p3);
+  const displayed = state.showInnerAngle ? inner : outer;
+  const label = state.showInnerAngle ? 'Inner' : 'Outer';
+  elements.result.textContent = `${label} angle: ${displayed.toFixed(1)}°`;
+}
+
+/**
+ * Creates a clickable “Add Frame” button, assigns it an event to activate annotation mode when clicked, and appends
+ * it to the frame bar in the UI.
+ */
 let addTile;
 function createAddFrameTile() {
   addTile = document.createElement('div');
@@ -531,6 +685,10 @@ function createAddFrameTile() {
   elements.frameBar.appendChild(addTile);
 }
 
+/**
+ * Captures the current video frame along with any canvas drawings, creates a thumbnail preview with a jump button for
+ * that moment, and adds it to the frame bar. It then clears any active annotations.
+ */
 function saveFrame() {
   const w = elements.canvas.width;
   const h = elements.canvas.height;
@@ -543,7 +701,7 @@ function saveFrame() {
 
   const item = document.createElement('div');
   item.className = 'frame-item';
-  item.dataset.videoIndex = state.currentVideoIndex;  
+  item.dataset.videoIndex = state.currentVideoIndex;
 
   const thumb = document.createElement('img');
   thumb.src = tmp.toDataURL();
@@ -562,6 +720,10 @@ function saveFrame() {
   clearAnnotations();
 }
 
+/**
+ * Saves an angle annotation defined by 3 clicked points on the canvas at the current video timestamp. It validates
+ * input, calculates the angle, stores it, updates the UI with feedback, and redraws annotations.
+ */
 function saveAngle() {
   if (state.points.length !== 3) {
     elements.result.textContent = "Please mark exactly 3 points before saving!";
@@ -569,25 +731,36 @@ function saveAngle() {
   }
 
   const [p1, p2, p3] = state.points;
-  const angle = calculateAngle(p1, p2, p3);
+  const { inner, outer } = calculateAngle(p1, p2, p3);
+  const displayed = state.showInnerAngle ? inner : outer;
 
-  if (isNaN(angle)) {
+  if (isNaN(displayed)) {
     elements.result.textContent = "Failed to calculate angle!";
     return;
   }
 
   const time = elements.video.currentTime;
 
-  state.angles.push({ id: Date.now() + Math.random(), time, points: [...state.points], angle });
+  state.angles.push({
+    id: Date.now() + Math.random(),
+    time,
+    points: [...state.points],
+    angle: displayed
+  });
 
-  elements.result.textContent = `Saved angle: ${angle.toFixed(2)}° at ${time.toFixed(2)}s`;
+  elements.result.textContent =
+    `Saved angle: ${displayed.toFixed(2)}° at ${time.toFixed(2)}s`;
 
   state.points = [];
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-
   checkAndRenderAngles();
 }
 
+/**
+ * Draws a green angle line (in the shape of a "V") connecting three saved points on the canvas, representing a
+ * previously saved angle annotation.
+ * @param {array} points Array of 3 point objects, each with x and y coordinates.
+ */
 function drawSavedAngle(points) {
   if (points.length < 3) return;
 
@@ -600,6 +773,12 @@ function drawSavedAngle(points) {
   ctx.stroke();
 }
 
+/**
+ * Checks if the user clicked near any saved angle on the current video frame. If so, it selects that angle, updates
+ * the UI to show info and a delete button; otherwise, it clears the selection and hides the delete button, then
+ * redraws the annotations.
+ * @param {object} clickPoint Object with { x, y } coordinates representing the user's click position on the canvas
+ */
 function selectAngleAtPosition(clickPoint) {
   const currentTime = elements.video.currentTime;
   const matchingAngles = state.angles.filter(a => Math.abs(a.time - currentTime) < 0.2);
@@ -609,7 +788,7 @@ function selectAngleAtPosition(clickPoint) {
       state.selectedAngle = angleObj.id;
       elements.result.textContent = `Angle: ${angleObj.angle.toFixed(2)}° (Click "Delete Selected" to remove)`;
 
-      document.getElementById('deleteSelectedAngle').style.display = 'inline-block'; // 🔥 Add this
+      document.getElementById('deleteSelectedAngle').style.display = 'inline-block';
 
       checkAndRenderAngles();
       return;
@@ -619,11 +798,18 @@ function selectAngleAtPosition(clickPoint) {
   state.selectedAngle = null;
   elements.result.textContent = '';
 
-  document.getElementById('deleteSelectedAngle').style.display = 'none'; // 🔥 Add this
+  document.getElementById('deleteSelectedAngle').style.display = 'none';
 
   checkAndRenderAngles();
 }
 
+/**
+ * Checks if the click position is within 10 pixels of any of the given angle points, returning true if so,
+ * otherwise false
+ * @param {object} click Object with { x, y } coordinates representing a click position
+ * @param {array} points Array of point objects, each with { x, y } coordinates representing the angle's points.
+ * @returns {boolean} A boolean (true or false)
+ */
 function isPointNearAngle(click, points) {
   const threshold = 10;
 
@@ -634,6 +820,10 @@ function isPointNearAngle(click, points) {
   });
 }
 
+/**
+ * Deletes the currently selected angle from the saved angles list, clears the selection and UI messages, hides the
+ * delete button, and then redraws the remaining angles on the canvas
+ */
 function deleteSelectedAngle() {
   if (state.selectedAngle == null) return;
 
@@ -649,8 +839,13 @@ function deleteSelectedAngle() {
   checkAndRenderAngles();
 }
 
+/**
+ * Tracks the mouse position over the canvas and checks if it’s near any angle points for the current video time;
+ * if so, updates the hovered angle state and triggers a redraw to visually highlight the hovered angle
+ * @param {event} event Mouse event object from moving the mouse over the canvas
+ */
 function handleCanvasMouseMove(event) {
-  if (state.annotationActive) return; // Skip if measuring
+  if (state.annotationActive) return;
 
   const rect = elements.canvas.getBoundingClientRect();
   const x = (event.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
@@ -671,6 +866,31 @@ function handleCanvasMouseMove(event) {
     state.hoveredAngle = hovered;
     checkAndRenderAngles();
   }
+
+  const overlay = elements.canvas;
+  const btn     = elements.hoverDeleteBtn;
+
+  if (state.annotationActive || state.hoveredAngle !== null) {
+    overlay.classList.add('active');
+  } else {
+    overlay.classList.remove('active');
+  }
+
+  if (state.hoveredAngle !== null) {
+    const angleObj = state.angles.find(a => a.id === state.hoveredAngle);
+    const p        = angleObj.points[1];
+
+    const rect    = overlay.getBoundingClientRect();
+    const xClient = rect.left + (p.x / overlay.width) * rect.width;
+    const yClient = rect.top  + (p.y / overlay.height) * rect.height;
+
+    btn.style.left    = `${xClient}px`;
+    btn.style.top     = `${yClient}px`;
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+  }
+
 }
 
 init();

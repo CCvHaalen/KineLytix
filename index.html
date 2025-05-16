@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Angle Measurement App</title>
+  <!-- linking the main CSS file -->
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+  <!-- script for CSV export (json2csv) -->
   <script src="https://cdn.jsdelivr.net/npm/json2csv"></script>
+
   <div class="app-container">
     <!-- Icon Toggle Sidebar -->
     <div id="toggle-sidebar" class="toggle-sidebar">
@@ -58,29 +61,51 @@
     <!-- Main Content Area --->
     <div class="main-content">
       <h1>Video Angle Measurement App</h1>
+
+      <!-- video player area -->
       <div id="video-container">
         <video id="video" controls></video>
         <canvas id="overlay"></canvas>
+        <!-- shows up on hover when deleting -->
+        <button id="hoverDeleteBtn" class="delete-btn" style="display:none;">×</button>
       </div>
+
+      <!-- timeline thumbnails go here -->
       <div id="frameBar" class="frame-bar">
+
       </div>
+
+      <!-- buttons for interacting with annotations etc. -->
       <div class="controls">
         <button id="activateAnnotation" class="btn primary">Measure Angle</button>
         <button id="clearAnnotation" class="btn">Clear Annotation</button>
-        <button id="saveFrame" class="btn" style="display:none">Save Frame</button> <!-- Consider removing inline style -->
-        <button id="saveAngle" class="btn" style="display:none;">Save Angle</button> <!-- Consider removing inline style -->
-        <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button> <!-- Consider removing inline style -->
+        <button id="toggleAngleType" class="btn" style="display:none">Show Outer Angle</button>
+        <button id="saveFrame" class="btn" style="display:none">Save Frame</button>
+        <button id="saveAngle" class="btn" style="display:none;">Save Angle</button>
+        <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button>
         <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
+
+        <!-- shows angle result after measurement -->
         <div id="result" class="result-display"></div>
+
+        <!-- control for playback speed -->
         <div class="speed-control">
-          <label for="speedSlider">Speed:</label>
-          <input type="range" id="speedSlider" min="0.25" max="4" step="0.05" value="1">
+          <label for="speedSelect">Speed:</label>
+          <select id="speedSelect">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+            </select>
           <span id="speedValue">1x</span>
         </div>
       </div>
     </div>
   </div>
 
+    <!-- main JS logic -->
   <script src="./script.js"></script>
 </body>
 </html>

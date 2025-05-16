@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 
 const createWindow = () => {
+    // create a new browser window
     const mainWindow = new BrowserWindow({
         width: 1280,
         height: 600,
@@ -9,13 +10,16 @@ const createWindow = () => {
         minHeight: 600,
         backgroundColor: '#f5f7fa',
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            nodeIntegration: true, // allow using node in renderer (not very secure but okay for small apps)
+            contextIsolation: false, // allows shared context (again, not super safe but convenient)
         },
-        show: false,
+        show: false, // don't show it immediately
     });
 
+    // load the main HTML file
     mainWindow.loadFile('index.html')
+
+    // only show window when it's ready to avoid flicker
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
     });
@@ -37,25 +41,13 @@ const createWindow = () => {
             return { success: false, error: error.message };
         }
     })
-
-    // ipcMain.on('get-data', async (event, arg) => {
-    //     console.log('Main process received:', arg);
-
-    //     try {
-    //         const simulatedData = { message: 'Data from backend (simulated)', timestamp: Date.now() }
-            
-    //         console.log('Sending data back to renderer:', simulatedData);
-    //         event.reply('data-reply', {success: true, data: simulatedData});
-    //     } catch (error) {
-    //         console.error('Error fetching data:', error);
-    //         event.reply('data-reply', {success: false, error: error.message});
-    //     }
-    // });
 }
 
+// wait until Electron is fully ready
 app.whenReady().then(() => {
     createWindow()
 
+    // on macOS, re-create a window when clicking the dock icon if none are open
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow()
@@ -63,6 +55,7 @@ app.whenReady().then(() => {
     })
 })
 
+// quit the app when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
