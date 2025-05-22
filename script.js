@@ -1,3 +1,5 @@
+const { ipcRenderer } = require('electron');
+
 const elements = {
   sidebar: document.getElementById('sidebar'),
   dropArea: document.getElementById('dropArea'),
@@ -16,7 +18,18 @@ const elements = {
   saveAngleBtn: document.getElementById('saveAngle'),
   frameBar: document.getElementById('frameBar'),
   hoveredAngle: null,
+  toggleSidebar: document.getElementById('toggle-sidebar'),
+  toggleVideoLibraryBtn: document.getElementById('toggleVideoLibrary'),
+  toggleFileManagerBtn: document.getElementById('toggleFileManager'),
+  videoLibraryView: document.getElementById('video-library-view'),
+  fileManagerView: document.getElementById('file-manager-view'),
+  folderList: document.getElementById('folderList'),
 };
+
+FileManager.init(ipcRenderer, {
+  folderList: elements.folderList,
+  fileManagerView: elements.fileManagerView,
+});
 
 elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
 elements.hoverDeleteBtn.addEventListener('click', () => {
@@ -77,6 +90,8 @@ function init() {
   setupEventListeners();
   setupDragAndDrop();
   createAddFrameTile();
+  setupSidebarToggle();
+  testFetchData();
   elements.speedSelect = document.getElementById('speedSelect');
   elements.speedValue  = document.getElementById('speedValue');
 
@@ -86,36 +101,75 @@ function init() {
     const speed = parseFloat(elements.speedSelect.value);
     elements.video.playbackRate = speed;
     elements.speedValue.textContent = speed.toFixed(2) + 'x';
-});
+  });
+  
+//   elements.speedSlider.addEventListener('input', () => {
+//   const speed = parseFloat(elements.speedSlider.value);
+//   elements.video.playbackRate = speed;
+//   elements.speedValue.textContent = speed.toFixed(2) + 'x';
+// });
 
   elements.toggleBtn.style.display = 'inline-block';
   elements.toggleBtn.addEventListener('click', () => {
-  state.showInnerAngle = !state.showInnerAngle;
-  elements.toggleBtn.textContent = state.showInnerAngle
-    ? 'Show Outer Angle'
-    : 'Show Inner Angle';
-
-  if (state.points.length === 3) {
+    state.showInnerAngle = !state.showInnerAngle;
+    elements.toggleBtn.textContent = state.showInnerAngle ? 'Show Outer Angle' : 'Show Inner Angle';
+    if (state.points.length === 3) {
     renderAngleDisplay();
     return;
-  }
+    }
 
-  const now = elements.video.currentTime;
-  const saved = state.angles.find(a => Math.abs(a.time - now) < 0.2);
-  if (saved) {
-    const { inner, outer } = calculateAngle(...saved.points);
-    const displayed = state.showInnerAngle ? inner : outer;
-    const label = state.showInnerAngle ? 'Inner' : 'Outer';
-    elements.result.textContent =
-      `${label} angle: ${displayed.toFixed(2)}° at ${saved.time.toFixed(2)}s`;
-  }
-});
+    const now = elements.video.currentTime;
+    const saved = state.angles.find(a => Math.abs(a.time - now) < 0.2);
+    if (saved) {
+      const { inner, outer } = calculateAngle(...saved.points);
+      const displayed = state.showInnerAngle ? inner : outer;
+      const label = state.showInnerAngle ? 'Inner' : 'Outer';
+      elements.result.textContent = `${label} angle: ${displayed.toFixed(1)}° at ${saved.time.toFixed(2)}s`;
+    }
+  });
 }
 
-/**
- * Wires up all the necessary event listeners for UI interaction, including file import, video loading,
- * annotation mode toggling, canvas interaction, saving frames/angles, window resizing, and deleting angles.
- */
+function setupSidebarToggle() {
+  elements.toggleVideoLibraryBtn.addEventListener('click', () => showView('video-library'));
+  elements.toggleFileManagerBtn.addEventListener('click', () => showView('file-manager'));
+}
+
+function showView(viewName) {
+  elements.videoLibraryView.classList.remove('active-view');
+  elements.fileManagerView.classList.remove('active-view');
+
+  elements.toggleVideoLibraryBtn.classList.remove('active');
+  elements.toggleFileManagerBtn.classList.remove('active');
+
+  if (viewName === 'video-library') {
+    elements.videoLibraryView.classList.add('active-view');
+    elements.toggleVideoLibraryBtn.classList.add('active');
+  } else if (viewName === 'file-manager') {
+    elements.fileManagerView.classList.add('active-view');
+    elements.toggleFileManagerBtn.classList.add('active');
+    FileManager.activateView();
+  }
+}
+
+
+// TEST FUNCTION TO FETCH DATA FROM BACKEND
+async function testFetchData() {
+  console.log('Renderer: Sending test request to main process...');
+  try {
+    const result = await ipcRenderer.invoke('fetch-data', 'api/videos/');
+    console.log('Renderer: Received response from main process:', result);
+
+    if (result.success) {
+      console.log('Renderer: Test fetch successful! Data:', result.data);
+    } else {
+      console.error('Renderer: Test fetch failed:', result.error);
+    }
+  } catch (error) {
+    console.error('Renderer: Error invoking IPC handler:', error);
+  }
+}
+
+
 function setupEventListeners() {
   elements.dropArea.addEventListener('click', () => {
     elements.videoFileInput.click();
@@ -274,7 +328,6 @@ function selectVideo(index) {
   elements.video.src = url;
   elements.video.load();
   elements.video.style.display = 'block';
-  elements.placeholder.style.display = 'none';
   clearAnnotations();
 
   document.querySelectorAll('.frame-item').forEach(item => {

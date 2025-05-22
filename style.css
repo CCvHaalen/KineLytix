@@ -7,6 +7,7 @@
 
 /* Basic body styles */
 body {
+    display: flex;
     font-family: 'Segoe UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #333;
     line-height: 1.6;
@@ -31,26 +32,101 @@ h2 {
 /* Layout container */
 .app-container {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  flex-grow: 1;
+  height: 100%; /* vh & vw*/
+  width: 100%;
+}
+
+.toggle-sidebar {
+  width: 50px;
+  background-color: #e9ecef;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid #ccc;
+}
+.toggle-btn {
+  background: none;
+  border: none;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  width: 40px; 
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+}
+
+.toggle-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+}
+
+.toggle-btn:hover {
+  background-color: #d0d0d0;
+}
+
+.toggle-btn.active {
+  background-color: #c0c0c0; 
+}
+
+.toggle-btn.active svg {
+  stroke: #000; 
 }
 
 /* Sidebar styles */
+
 .sidebar {
   width: 280px;
   background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
-  padding: 20px;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   height: 100%;
+  overflow: hidden;
   transition: background-color 0.3s ease;
 }
 
-/* Header in sidebar */
+.sidebar-view {
+  display: none; 
+  flex-grow: 1; 
+  padding: 15px; 
+  overflow-y: auto;
+  height: 100%;
+}
+
+.sidebar-view.active-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-view {
+  display: none; 
+  flex-grow: 1; 
+  padding: 15px; 
+  overflow-y: auto;
+  height: 100%;
+}
+
+.sidebar-view.active-view {
+  display: flex;
+  flex-direction: column;
+}
+
+
 .sidebar h2 {
   padding-bottom: 10px;
   border-bottom: 1px solid #dee2e6;
+  margin-bottom: 15px;
+  flex-shrink: 0;
 }
 
 /* Instructions in sidebar */
@@ -223,10 +299,10 @@ h2 {
 .main-content {
   flex-grow: 1;
   padding: 25px;
-  display: flex;
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
+  display: flex;
 }
 
 /* Video container */
@@ -258,8 +334,8 @@ h2 {
   width: 100%;
   height: auto;
   max-width: 100%;
-  max-height: 60vh;
-  display: none;
+  max-height: 70vh; /*60 vh*/
+  display: none; /*block*/
   border-radius: 4px;
   object-fit: contain;
 }
@@ -269,11 +345,10 @@ h2 {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
   display: none;
   z-index: 2;
+  /* background-color: #FF0000;  For debugging*/ 
 }
 
 /* Enable pointer events when overlay is active */
@@ -330,7 +405,18 @@ h2 {
   font-weight: 500;
 }
 
-/* Frame preview item */
+.frame-bar {
+  display: flex;
+  align-items: center; 
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px;
+  background: #eceff1;
+  margin-top: 12px;
+  flex-shrink: 0;
+  margin-top: 15px;
+}
+
 .frame-item {
   position: relative;
   max-width: 160px;
@@ -436,8 +522,7 @@ h2 {
   min-width: 40px;
   text-align: center;
 }
-
-/* Button to delete a frame */
+  /* Button to delete a frame */
 .delete-btn {
   position: absolute;
   width: 24px;
@@ -452,6 +537,36 @@ h2 {
   cursor: pointer;
   z-index: 10;
   transform: translate(-50%, -50%);
+}
+
+/* File Manager Styling  */
+
+.file-manager-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.video-list {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* #file-manager-view {
+
+} */
+ 
+#folderList {
+  list-style: none;
+  padding: 0;
+}
+
+#folderList li {
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+#folderList li:hover {
+  background-color: #f0f0f0;
 }
 .checkpoint-bar {
   margin: 10px 0;
