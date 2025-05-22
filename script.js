@@ -24,6 +24,11 @@ const elements = {
   folderList: document.getElementById('folderList'),
 };
 
+FileManager.init(ipcRenderer, {
+  folderList: elements.folderList,
+  fileManagerView: elements.fileManagerView,
+});
+
 elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
 elements.hoverDeleteBtn.addEventListener('click', () => {
   if (state.hoveredAngle !== null) {
@@ -95,11 +100,12 @@ function init() {
     elements.speedValue.textContent = speed.toFixed(2) + 'x';
   });
   
-  elements.speedSlider.addEventListener('input', () => {
-  const speed = parseFloat(elements.speedSlider.value);
-  elements.video.playbackRate = speed;
-  elements.speedValue.textContent = speed.toFixed(2) + 'x';
-});
+//   elements.speedSlider.addEventListener('input', () => {
+//   const speed = parseFloat(elements.speedSlider.value);
+//   elements.video.playbackRate = speed;
+//   elements.speedValue.textContent = speed.toFixed(2) + 'x';
+// });
+
   elements.toggleBtn.style.display = 'inline-block';
   elements.toggleBtn.addEventListener('click', () => {
     state.showInnerAngle = !state.showInnerAngle;
@@ -138,44 +144,9 @@ function showView(viewName) {
   } else if (viewName === 'file-manager') {
     elements.fileManagerView.classList.add('active-view');
     elements.toggleFileManagerBtn.classList.add('active');
-    
-    fetchFolders(); 
-
+    FileManager.activateView();
   }
 }
-
-// FETCH FOLDERS FROM BACKEND
-async function fetchFolders() {
-  console.log('Renderer requesting folder data...');
-  try {
-      const result = await ipcRenderer.invoke('fetch-data', 'api/folders/');
-      console.log('Renderer received folder data:', result);
-      if (result.success) {
-          populateFolderList(result.data); 
-      } else {
-          console.error('Failed to fetch folders:', result.error);
-          elements.folderList.innerHTML = '<li>Error loading folders</li>';
-      }
-  } catch (error) {
-      console.error('IPC Error fetching folders:', error);
-      elements.folderList.innerHTML = '<li>Error loading folders</li>';
-  }
-}
-
-function populateFolderList(folders) {
-  elements.folderList.innerHTML = '';
-  if (!folders || folders.length === 0) {
-      elements.folderList.innerHTML = '<li>No folders found.</li>';
-      return;
-  }
-  folders.forEach(folder => {
-      const li = document.createElement('li');
-      li.textContent = folder.name || `Folder ${folder.id}`;
-      li.dataset.folderId = folder.id;
-      elements.folderList.appendChild(li);
-  });
-}
-
 
 
 // TEST FUNCTION TO FETCH DATA FROM BACKEND
