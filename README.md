@@ -7,8 +7,10 @@ Use
 Now the database will only run locally so make sure to install the correct dependencies under requirements.txt
 
 TNO Admin Testing Credentials:
-    User: TNO
-    Pass: adminpass
+
+User: TNO 
+
+Pass: adminpass
 
 
 
