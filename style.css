@@ -453,3 +453,120 @@ h2 {
   z-index: 10;
   transform: translate(-50%, -50%);
 }
+.checkpoint-bar {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.checkpoint-bar h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.timeline-container {
+  display: flex;
+  margin: 15px 0;
+  width: 100%;
+  gap: 20px;
+}
+
+.timeline-section {
+  flex: 1;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 200px; /* Fixed height */
+  overflow: hidden; /* Hide any overflow from child elements */
+  position: relative; /* For positioning children */
+}
+
+.timeline-section h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Frame bar styles */
+.frame-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  align-content: flex-start;
+  padding-right: 5px;
+}
+
+/* Checkpoint list styles - horizontal layout */
+.checkpoint-list {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%; /* Take full width of parent */
+  flex-wrap: nowrap; /* Prevent wrapping */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling */
+  padding-bottom: 10px; /* Space for the scrollbar */
+  flex: 1;
+  scrollbar-width: thin; /* For Firefox */
+}
+
+/* Make sure checkpoints don't shrink */
+.checkpoint-item {
+  flex: 0 0 auto; /* Don't grow or shrink */
+  min-width: 100px; /* Minimum width */
+  max-width: 150px; /* Maximum width */
+  background-color: #e9ecef;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-right: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.checkpoint-item:hover {
+  background-color: #dee2e6;
+}
+
+.checkpoint-time {
+  font-weight: bold;
+  white-space: nowrap; /* Prevent time from wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkpoint-delete {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  margin-left: 5px;
+  flex-shrink: 0; /* Don't let delete button shrink */
+}
+
+/* Visible scrollbars */
+.checkpoint-list::-webkit-scrollbar {
+  height: 8px; /* Height of horizontal scrollbar */
+  width: 8px;
+}
+
+.checkpoint-list::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 10px;
+}
+
+.checkpoint-list::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 10px;
+}

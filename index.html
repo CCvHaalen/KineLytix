@@ -60,8 +60,20 @@
       </div>
 
       <!-- timeline thumbnails go here -->
-      <div id="frameBar" class="frame-bar">
-
+      <div class="timeline-container">
+        <div class="timeline-section">
+          <h4>Saved Frames</h4>
+          <div id="frameBar" class="frame-bar">
+            <!-- Frames will be added here -->
+          </div>
+        </div>
+        
+        <div class="timeline-section">
+          <h4>Checkpoints</h4>
+          <div id="checkpointList" class="checkpoint-list">
+            <!-- Checkpoints will be added here -->
+          </div>
+        </div>
       </div>
 
       <!-- buttons for interacting with annotations etc. -->
@@ -72,6 +84,7 @@
         <button id="saveFrame" class="btn" style="display:none">Save Frame</button>
         <button id="saveAngle" class="btn" style="display:none;">Save Angle</button>
         <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button>
+        <button id="createCheckpoint" class="btn">Create Checkpoint</button>
         <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
 
         <!-- shows angle result after measurement -->
