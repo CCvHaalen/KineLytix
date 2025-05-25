@@ -9,9 +9,9 @@ let mainWindow;
 function getBackendPath() {
     const isDev = !app.isPackaged;
     if (isDev) {
-        return path.join(__dirname, '..', 'tno-backend');
+        return path.join(__dirname, '..', 'TNO-Backend');
     } else {
-        return path.join(process.resourcesPath, 'app', 'tno-backend');
+        return path.join(process.resourcesPath, 'app', 'TNO-Backend');
     }
 }
 function startDjangoServer() {
@@ -192,7 +192,10 @@ ipcMain.handle('fetch-data', async (event, endpoint) => {
     const url = `http://127.0.0.1:8000/${endpoint}`;
     console.log('Fetching data from:', url);
 
-    if (!djangoServerProcess && !(await checkServerHealth())) {
+    const isDev = !app.isPackaged;
+
+    if (!isDev && !djangoServerProcess && !(await checkServerHealth())) {
+
         const errorMsg = 'Backend Sserver is not running or has been stopped.';
         console.error(`Main: ${errorMsg}`);
         return { success: false, error: errorMsg };
