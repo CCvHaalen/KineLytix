@@ -53,6 +53,9 @@
         <div class="file-manager-content">
           <p>Database files loaded here</p>
           <ul id="folderList"></ul>
+          <div id="addProjectBox" class="add-project-box">
+            + New Project
+          </div>
         </div>
       </div>
     </div> 
@@ -104,9 +107,18 @@
       </div>
     </div>
   </div>
-
-    <!-- main JS logic -->
+   <!-- main JS logic -->
   <script src ="./fileManager.js"></script>
   <script src="./script.js"></script>
+  <div id="newProjectModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Create New Project</h3>
+    <input id="newProjectInput" type="text" placeholder="Project name" />
+    <div class="modal-actions">
+      <button id="cancelModalBtn" class="btn">Cancel</button>
+      <button id="confirmModalBtn" class="btn primary">Create</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

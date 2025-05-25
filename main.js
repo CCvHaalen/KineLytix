@@ -216,6 +216,30 @@ ipcMain.handle('fetch-data', async (event, endpoint) => {
     }
 });
 
+ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
+  const url = `http://127.0.0.1:8000/${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (err) {
+    console.error("Main: POST failed", err);
+    return { success: false, error: err.message };
+  }
+});
+
+
 async function checkServerHealth() {
     try {
         const response = await fetch('http://127.0.0.1:8000/', { method: 'HEAD', timeout: 1000 }); // A lightweight check
