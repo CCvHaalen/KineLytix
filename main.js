@@ -9,9 +9,9 @@ let mainWindow;
 function getBackendPath() {
     const isDev = !app.isPackaged;
     if (isDev) {
-        return path.join(__dirname, '..', 'TNO-Backend');
+        return path.join(__dirname, '..', 'tno-backend');
     } else {
-        return path.join(process.resourcesPath, 'app', 'TNO-Backend');
+        return path.join(process.resourcesPath, 'app', 'tno-backend');
     }
 }
 function startDjangoServer() {
