@@ -895,9 +895,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     if (response.success) {
-      // Force re-fetch of folders even if DOM already has content
       console.log("Project created. Forcing folder list refresh.");
-      FileManager.refreshNow(); // <- custom method we’ll define next
+      FileManager.refreshNow();
     } else {
       alert("Failed to create project: " + response.error);
     }

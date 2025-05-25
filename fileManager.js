@@ -158,39 +158,15 @@ const FileManager = (() => {
 })();
 
 function exportFolderToCSV(folderId) {
-  console.log("Export folder", folderId);
   // TODO: Fetch data and export CSV
 }
 
-function promptRenameFolder(folderId, currentName) {
-  const newName = prompt("Rename folder:", currentName);
-  if (!newName || newName.trim() === "") return;
-
-  ipcRenderer.invoke('post-data', {
-    endpoint: `api/folders/${folderId}/rename/`,
-    payload: { name: newName.trim() }
-  }).then(response => {
-    if (response.success) {
-      FileManager.refreshNow();
-    } else {
-      alert("Failed to rename: " + response.error);
-    }
-  });
+function renameFolder(folderId, currentName) {
+  // TODO: add rename folder functionality
 }
 
 function deleteFolder(folderId) {
-  if (!confirm("Are you sure you want to delete this folder?")) return;
-
-  ipcRenderer.invoke('post-data', {
-    endpoint: `api/folders/${folderId}/delete/`,
-    payload: {}
-  }).then(response => {
-    if (response.success) {
-      FileManager.refreshNow();
-    } else {
-      alert("Failed to delete: " + response.error);
-    }
-  });
+  // TODO: Delete folder functionality
 }
 
 window.FileManager = FileManager;
