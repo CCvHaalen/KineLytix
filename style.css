@@ -29,6 +29,7 @@ h2 {
   color: #34495e;
 }
 
+
 /* Layout container */
 .app-container {
   display: flex;
@@ -568,6 +569,115 @@ h2 {
 #folderList li:hover {
   background-color: #f0f0f0;
 }
+
+.add-project-box {
+  margin-top: 10px;
+  padding: 12px;
+  text-align: center;
+  border: 2px dashed #ccc;
+  color: #3498db;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: #fdfdfd;
+  transition: all 0.2s ease;
+}
+
+.add-project-box:hover {
+  background-color: #e6f2ff;
+  border-color: #3498db;
+}
+
+.modal {
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h3 {
+  margin-bottom: 10px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.folder-item {
+  position: relative;
+  padding-right: 30px;
+}
+
+.folder-actions {
+  position: absolute;
+  top: 0;
+  right: 5px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.folder-actions .dots {
+  display: none;
+  cursor: pointer;
+  padding: 3px 3px;
+  font-size: 18px;
+  user-select: none;
+}
+
+.folder-actions .action-menu {
+  position: absolute;
+  right: 0;
+  top: 22px;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.folder-actions .action-menu.hidden {
+  display: none;
+}
+
+.folder-actions .action-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.folder-actions .action-item:hover {
+  background-color: #f0f0f0;
+}
+
 .checkpoint-bar {
   margin: 10px 0;
   padding: 10px;

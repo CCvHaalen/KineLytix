@@ -31,6 +31,7 @@ FileManager.init(ipcRenderer, {
   fileManagerView: elements.fileManagerView,
 });
 
+
 elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
 elements.hoverDeleteBtn.addEventListener('click', () => {
   if (state.hoveredAngle !== null) {
@@ -880,6 +881,49 @@ function handleCanvasMouseMove(event) {
   }
 
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  const addProjectBox = document.getElementById('addProjectBox');
+  const modal = document.getElementById('newProjectModal');
+  const input = document.getElementById('newProjectInput');
+  const confirmBtn = document.getElementById('confirmModalBtn');
+  const cancelBtn = document.getElementById('cancelModalBtn');
+
+  if (!addProjectBox || !modal || !input || !confirmBtn || !cancelBtn) {
+    console.error("Modal elements not found in DOM");
+    return;
+  }
+
+  addProjectBox.addEventListener('click', () => {
+    input.value = '';
+    modal.style.display = 'flex';
+    input.focus();
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const folderName = input.value.trim();
+    if (!folderName) return;
+
+    modal.style.display = 'none';
+
+    const response = await ipcRenderer.invoke('post-data', {
+      endpoint: 'api/folders/',
+      payload: { name: folderName }
+    });
+
+    if (response.success) {
+      console.log("Project created. Forcing folder list refresh.");
+      FileManager.refreshNow();
+    } else {
+      alert("Failed to create project: " + response.error);
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+});
+
 
 /**
  * Creates a new checkpoint at the current video time
