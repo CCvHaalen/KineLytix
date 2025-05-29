@@ -29,6 +29,7 @@ h2 {
   color: #34495e;
 }
 
+
 /* Layout container */
 .app-container {
   display: flex;
@@ -567,4 +568,230 @@ h2 {
 
 #folderList li:hover {
   background-color: #f0f0f0;
+}
+
+.add-project-box {
+  margin-top: 10px;
+  padding: 12px;
+  text-align: center;
+  border: 2px dashed #ccc;
+  color: #3498db;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: #fdfdfd;
+  transition: all 0.2s ease;
+}
+
+.add-project-box:hover {
+  background-color: #e6f2ff;
+  border-color: #3498db;
+}
+
+.modal {
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h3 {
+  margin-bottom: 10px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.folder-item {
+  position: relative;
+  padding-right: 30px;
+}
+
+.folder-actions {
+  position: absolute;
+  top: 0;
+  right: 5px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.folder-actions .dots {
+  display: none;
+  cursor: pointer;
+  padding: 3px 3px;
+  font-size: 18px;
+  user-select: none;
+}
+
+.folder-actions .action-menu {
+  position: absolute;
+  right: 0;
+  top: 22px;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.folder-actions .action-menu.hidden {
+  display: none;
+}
+
+.folder-actions .action-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.folder-actions .action-item:hover {
+  background-color: #f0f0f0;
+}
+
+.checkpoint-bar {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.checkpoint-bar h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.timeline-container {
+  display: flex;
+  margin: 15px 0;
+  width: 100%;
+  gap: 20px;
+}
+
+.timeline-section {
+  flex: 1;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 200px; /* Fixed height */
+  overflow: hidden; /* Hide any overflow from child elements */
+  position: relative; /* For positioning children */
+}
+
+.timeline-section h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Frame bar styles */
+.frame-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  align-content: flex-start;
+  padding-right: 5px;
+}
+
+/* Checkpoint list styles - horizontal layout */
+.checkpoint-list {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%; /* Take full width of parent */
+  flex-wrap: nowrap; /* Prevent wrapping */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling */
+  padding-bottom: 10px; /* Space for the scrollbar */
+  flex: 1;
+  scrollbar-width: thin; /* For Firefox */
+}
+
+/* Make sure checkpoints don't shrink */
+.checkpoint-item {
+  flex: 0 0 auto; /* Don't grow or shrink */
+  min-width: 100px; /* Minimum width */
+  max-width: 150px; /* Maximum width */
+  background-color: #e9ecef;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-right: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.checkpoint-item:hover {
+  background-color: #dee2e6;
+}
+
+.checkpoint-time {
+  font-weight: bold;
+  white-space: nowrap; /* Prevent time from wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkpoint-delete {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  margin-left: 5px;
+  flex-shrink: 0; /* Don't let delete button shrink */
+}
+
+/* Visible scrollbars */
+.checkpoint-list::-webkit-scrollbar {
+  height: 8px; /* Height of horizontal scrollbar */
+  width: 8px;
+}
+
+.checkpoint-list::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 10px;
+}
+
+.checkpoint-list::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 10px;
 }

@@ -10,6 +10,8 @@ const elements = {
   videoContainer: document.getElementById('video-container'),
   activateBtn: document.getElementById('activateAnnotation'),
   clearBtn: document.getElementById('clearAnnotation'),
+  createCheckpointBtn: document.getElementById('createCheckpoint'),
+  checkpointList: document.getElementById('checkpointList'),
   result: document.getElementById('result'),
   placeholder: document.getElementById('placeholder-message'),
   saveFrameBtn: document.getElementById('saveFrame'),
@@ -29,6 +31,7 @@ FileManager.init(ipcRenderer, {
   fileManagerView: elements.fileManagerView,
 });
 
+
 elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
 elements.hoverDeleteBtn.addEventListener('click', () => {
   if (state.hoveredAngle !== null) {
@@ -45,6 +48,7 @@ const state = {
   annotationActive: false,
   points: [],
   videoFiles: [],
+  checkpoints: [],
   currentVideoIndex: -1,
   angles: [],
   selectedAngle: null,
@@ -194,6 +198,7 @@ function setupEventListeners() {
 
   elements.videoContainer.addEventListener('mousemove', handleCanvasMouseMove);
 
+  elements.createCheckpointBtn.addEventListener('click', createCheckpoint);
 }
 
 /**
@@ -333,6 +338,8 @@ function selectVideo(index) {
       item.style.display = 'none';
     }
   });
+
+  updateCheckpointVisibility();
 }
 
 /**
@@ -654,6 +661,13 @@ function createAddFrameTile() {
   addTile.textContent = 'Add Frame';
   addTile.addEventListener('click', activateAnnotationMode);
   elements.frameBar.appendChild(addTile);
+  
+  // Make sure the add tile appears at the beginning of the frameBar
+  if (elements.frameBar.firstChild) {
+    elements.frameBar.insertBefore(addTile, elements.frameBar.firstChild);
+  } else {
+    elements.frameBar.appendChild(addTile);
+  }
 }
 
 /**
@@ -688,6 +702,10 @@ function saveFrame() {
   item.appendChild(button);
 
   elements.frameBar.insertBefore(item, elements.frameBar.lastElementChild);
+  
+  // Scroll to show the new checkpoint
+  item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
   clearAnnotations();
 }
 
@@ -862,6 +880,161 @@ function handleCanvasMouseMove(event) {
     btn.style.display = 'none';
   }
 
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const addProjectBox = document.getElementById('addProjectBox');
+  const modal = document.getElementById('newProjectModal');
+  const input = document.getElementById('newProjectInput');
+  const confirmBtn = document.getElementById('confirmModalBtn');
+  const cancelBtn = document.getElementById('cancelModalBtn');
+
+  if (!addProjectBox || !modal || !input || !confirmBtn || !cancelBtn) {
+    console.error("Modal elements not found in DOM");
+    return;
+  }
+
+  addProjectBox.addEventListener('click', () => {
+    input.value = '';
+    modal.style.display = 'flex';
+    input.focus();
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const folderName = input.value.trim();
+    if (!folderName) return;
+
+    modal.style.display = 'none';
+
+    const response = await ipcRenderer.invoke('post-data', {
+      endpoint: 'api/folders/',
+      payload: { name: folderName }
+    });
+
+    if (response.success) {
+      console.log("Project created. Forcing folder list refresh.");
+      FileManager.refreshNow();
+    } else {
+      alert("Failed to create project: " + response.error);
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+});
+
+
+/**
+ * Creates a new checkpoint at the current video time
+ */
+function createCheckpoint() {
+  if (state.currentVideoIndex === -1) {
+    elements.result.textContent = "Please select a video first";
+    return;
+  }
+
+  const time = elements.video.currentTime;
+  const checkpointId = Date.now();
+  
+  // Create checkpoint object
+  const checkpoint = {
+    id: checkpointId,
+    time: time,
+    videoIndex: state.currentVideoIndex
+  };
+  
+  // Add to state
+  state.checkpoints.push(checkpoint);
+  
+  // Add to UI
+  addCheckpointToUI(checkpoint);
+  
+  elements.result.textContent = `Checkpoint created at ${time.toFixed(2)}s`;
+}
+
+/**
+ * Adds a checkpoint to the UI checkpoint list
+ * @param {object} checkpoint The checkpoint object to add
+ */
+function addCheckpointToUI(checkpoint) {
+  const item = document.createElement('div');
+  item.className = 'checkpoint-item';
+  item.dataset.id = checkpoint.id;
+  item.dataset.videoIndex = checkpoint.videoIndex;
+  
+  if (parseInt(item.dataset.videoIndex) !== state.currentVideoIndex) {
+    item.style.display = 'none';
+  }
+  
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'checkpoint-time';
+  timeSpan.textContent = `${checkpoint.time.toFixed(2)}s`;
+  
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'checkpoint-delete';
+  deleteBtn.innerHTML = '&times;';
+  deleteBtn.title = "Delete checkpoint";
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deleteCheckpoint(checkpoint.id);
+  });
+  
+  item.appendChild(timeSpan);
+  item.appendChild(deleteBtn);
+  
+  item.addEventListener('click', () => {
+    jumpToCheckpoint(checkpoint.time);
+  });
+  
+  elements.checkpointList.appendChild(item);
+  
+  // Ensure new checkpoint is visible by scrolling to it
+  setTimeout(() => {
+    elements.checkpointList.scrollLeft = elements.checkpointList.scrollWidth;
+  }, 50);
+}
+
+/**
+ * Jumps to the specified time in the current video
+ * @param {number} time The time to jump to in seconds
+ */
+function jumpToCheckpoint(time) {
+  elements.video.currentTime = time;
+  elements.result.textContent = `Jumped to checkpoint at ${time.toFixed(2)}s`;
+}
+
+/**
+ * Deletes a checkpoint by ID
+ * @param {number} id The ID of the checkpoint to delete
+ */
+function deleteCheckpoint(id) {
+  // Remove from state
+  const index = state.checkpoints.findIndex(cp => cp.id === id);
+  if (index !== -1) {
+    state.checkpoints.splice(index, 1);
+  }
+  
+  // Remove from UI
+  const item = document.querySelector(`.checkpoint-item[data-id="${id}"]`);
+  if (item) {
+    elements.checkpointList.removeChild(item);
+  }
+  
+  elements.result.textContent = "Checkpoint deleted";
+}
+
+/**
+ * Updates visibility of checkpoints based on current video
+ */
+function updateCheckpointVisibility() {
+  document.querySelectorAll('.checkpoint-item').forEach(item => {
+    if (parseInt(item.dataset.videoIndex) === state.currentVideoIndex) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
 }
 
 init();
