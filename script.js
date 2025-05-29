@@ -902,7 +902,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   confirmBtn.addEventListener('click', async () => {
     const folderName = input.value.trim();
-    if (!folderName) return;
+    if (!folderName) {
+      console.log()
+      return;
+    }
 
     modal.style.display = 'none';
 
