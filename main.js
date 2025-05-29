@@ -11,7 +11,7 @@ function getBackendPath() {
     if (isDev) {
         return path.join(__dirname, '..', 'TNO-Backend');
     } else {
-        return path.join(process.resourcesPath, 'app', 'TNO-Backend');
+        return path.join(process.resourcesPath, 'TNO-Backend');
     }
 }
 function startDjangoServer() {
