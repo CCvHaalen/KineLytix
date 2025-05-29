@@ -290,6 +290,7 @@ function updateVideoList() {
   
   state.videoFiles.forEach((file, index) => {
     const li = document.createElement('li');
+    li.classList.add('video-item');
     li.textContent = file.name;
     li.dataset.index = index;
     
@@ -297,6 +298,16 @@ function updateVideoList() {
       li.classList.add('active');
     }
     
+    const deleteBtn = document.createElement('span');
+    deleteBtn.textContent = '×';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteVideo(index);
+    });
+
+    li.appendChild(deleteBtn);
+
     li.addEventListener('click', () => {
       selectVideo(index);
     });
@@ -311,6 +322,26 @@ function updateVideoList() {
  * the selected video while hiding others.
  * @param {integer} index the position of the video in state.videoFiles to select
  */
+
+function deleteVideo(index) {
+  if (index < 0 || index >= state.videoFiles.length) return;
+
+  state.videoFiles.splice(index, 1);
+
+  if (index === state.currentVideoIndex) {
+    state.currentVideoIndex = -1;
+    elements.video.src = '';
+    elements.video.load();
+    elements.placeholder.style.display = 'block';
+    elements.video.style.display = 'none';
+    clearAnnotations();
+  } else if (index < state.currentVideoIndex) {
+    state.currentVideoIndex--;
+  }
+
+  updateVideoList();
+}
+
 function selectVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
 
@@ -1039,5 +1070,18 @@ function updateCheckpointVisibility() {
     }
   });
 }
+
+const modal = document.getElementById('loginModal');
+const modalContent = document.getElementById('modalContent');
+
+document.getElementById('openLogin').addEventListener('click', () => {
+  modal.style.display = 'flex';
+});
+
+modal.addEventListener('click', (e) => {
+  if (!modalContent.contains(e.target)) {
+    modal.style.display = 'none';
+  }
+});
 
 init();

@@ -7,7 +7,8 @@
   <!-- linking the main CSS file -->
   <link rel="stylesheet" href="./style.css" />
 </head>
-<body>
+
+<body class="main-page">
   <!-- script for CSV export (json2csv) -->
   <script src="https://cdn.jsdelivr.net/npm/json2csv"></script>
 
@@ -63,13 +64,17 @@
 
     <!-- Main Content Area --->
     <div class="main-content">
-      <h1>Video Angle Measurement App</h1>
+      <div class="header-container">
+        <h1 class="header-title">Video Angle Measurement App</h1>
+        <button class="header-btn" id="openLogin">Log in participant</button>
+      </div>
 
       <!-- video player area -->
+
       <div id="video-container">
         <video id="video" controls></video>
         <canvas id="overlay"></canvas>
-        <!-- shows up on hover when deleting -->
+        <!-- shows up on hover when deleting --> 
         <button id="hoverDeleteBtn" class="delete-btn" style="display:none;">×</button>
       </div>
 
@@ -122,6 +127,54 @@
   </div>
    <!-- main JS logic -->
   <script src ="./fileManager.js"></script>
+    <div id="loginModal" class="modal">
+
+      <div class="grid-container" id="modalContent">
+        <div class="header-login">Login for Assessment</div>
+
+        <div class="main-login">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="participant-id">Participant ID</label>
+                    <input type="text" id="participant-id" placeholder="Enter Participant ID" name="participant-id"/>
+                </div>
+                <div class="form-group">
+                    <label for="condition">Condition/Configuration</label>
+                    <input type="text" id="condition" placeholder="Enter Condition/Configuration" name="condition"/>
+                </div>
+                <div class="form-group">
+                    <label for="exercise">Exercise</label>
+                    <select id="exercise" placeholder="Enter Exercise" name="exercise">
+                        <option value="">Select Exercise</option>
+                        <option value="seated reach">Seated reach</option>
+                        <option value="wall reach">Wall reach</option>
+                        <option value="seated reach">Seated reach</option>
+                        <option value="neck flexion and extension">Neck flexion & extension</option>
+                        <option value="knee lift">Knee lift</option>
+                        <option value="cross shoulder reach">Cross shoulder reach</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trial">Trial</label>
+                    <input type="text" id="trial" placeholder="Enter Trial" name="trial"/>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" placeholder="Enter Date" name="date"/>
+                </div> 
+
+                <button type="submit" class="submit-button">Submit</button>
+
+            </form>
+
+            <script>
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('date').setAttribute('max', today);
+            </script>
+            
+      </div>
+    </div>
+
   <script src="./script.js"></script>
   <div id="newProjectModal" class="modal" style="display:none;">
   <div class="modal-content">
