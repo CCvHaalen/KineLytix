@@ -1,20 +1,26 @@
 from rest_framework import viewsets, permissions, parsers
 from .models import Folder, Video
 from .serializers import FolderSerializer, VideoSerializer, FolderWithVideosSerializer
+import logging
 # Create your views here.
+
+logger = logging.getLogger(__name__)
 
 class FolderViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows folders to be viewed or edited.
     """
     queryset = Folder.objects.all().order_by('-created_at')
-    serializer_class = FolderSerializer
     permission_classes = [permissions.AllowAny] #Adjust permissions if needed
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return FolderWithVideosSerializer
         return FolderSerializer
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        logger.info(f"New Project Folder added: ID={instance.id}, Name={instance.name}")
     
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
