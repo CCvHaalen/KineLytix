@@ -1,8 +1,17 @@
-# TNO-Backend
+# TNO-Backend Instructions 
 
 
 Use 
-python manage.py runserver to initialize the local server.
+`python manage.py runserver` to initialize the local server.
+
+Now the database will only run locally so make sure to install the correct dependencies under requirements.txt
+
+TNO Admin Testing Credentials:
+
+User: TNO 
+
+Pass: adminpass
+
 
 
 ## Getting started
