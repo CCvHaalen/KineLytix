@@ -2,47 +2,68 @@ const { ipcRenderer } = require('electron');
 
 const elements = {
   sidebar: document.getElementById('sidebar'),
-  dropArea: document.getElementById('dropArea'),
-  videoFileInput: document.getElementById('videoFile'),
-  videoList: document.getElementById('videoList'),
-  video: document.getElementById('video'),
-  canvas: document.getElementById('overlay'),
-  videoContainer: document.getElementById('video-container'),
-  activateBtn: document.getElementById('activateAnnotation'),
-  clearBtn: document.getElementById('clearAnnotation'),
-  createCheckpointBtn: document.getElementById('createCheckpoint'),
-  checkpointList: document.getElementById('checkpointList'),
-  result: document.getElementById('result'),
-  placeholder: document.getElementById('placeholder-message'),
-  saveFrameBtn: document.getElementById('saveFrame'),
-  saveAngleBtn: document.getElementById('saveAngle'),
-  frameBar: document.getElementById('frameBar'),
-  hoveredAngle: null,
   toggleSidebar: document.getElementById('toggle-sidebar'),
   toggleVideoLibraryBtn: document.getElementById('toggleVideoLibrary'),
   toggleFileManagerBtn: document.getElementById('toggleFileManager'),
   videoLibraryView: document.getElementById('video-library-view'),
   fileManagerView: document.getElementById('file-manager-view'),
+  dropArea: document.getElementById('dropArea'),
+  videoFileInput: document.getElementById('videoFile'),
+  videoList: document.getElementById('videoList'),
   folderList: document.getElementById('folderList'),
+  addProjectBox: document.getElementById('addProjectBox'),
+  videoContainer: document.getElementById('video-container'),
+  video: document.getElementById('video'),
+  canvas: document.getElementById('overlay'),
+  hoverDeleteBtn: document.getElementById('hoverDeleteBtn'),
+  frameBar: document.getElementById('frameBar'),
+  checkpointList: document.getElementById('checkpointList'),
+  activateBtn: document.getElementById('activateAnnotation'),
+  clearBtn: document.getElementById('clearAnnotation'),
+  toggleBtn: document.getElementById('toggleAngleType'), // Previously elements.toggleBtn
+  saveFrameBtn: document.getElementById('saveFrame'),
+  saveAngleBtn: document.getElementById('saveAngle'),
+  deleteSelectedAngleBtn: document.getElementById('deleteSelectedAngle'),
+  createCheckpointBtn: document.getElementById('createCheckpoint'),
+  btnDownloadCsv: document.getElementById('btnDownloadCsv'),
+  result: document.getElementById('result'),
+  speedSelect: document.getElementById('speedSelect'),
+  speedValue: document.getElementById('speedValue'),
+  newProjectModal: document.getElementById('newProjectModal'),
+  newProjectInput: document.getElementById('newProjectInput'),
+  confirmModalBtn: document.getElementById('confirmModalBtn'),
+  cancelModalBtn: document.getElementById('cancelModalBtn'),
+  loginModal: document.getElementById('loginModal'),
+  modalContent: document.getElementById('modalContent'), 
+  openLoginBtn: document.getElementById('openLogin'),
+  placeholder: document.getElementById('placeholder-message'),
 };
 
-FileManager.init(ipcRenderer, {
-  folderList: elements.folderList,
-  fileManagerView: elements.fileManagerView,
-});
-
-
-elements.hoverDeleteBtn = document.getElementById('hoverDeleteBtn');
-elements.hoverDeleteBtn.addEventListener('click', () => {
-  if (state.hoveredAngle !== null) {
-    deleteSelectedAngle();
+if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileManagerView) {
+  try {
+    FileManager.init(ipcRenderer, {
+      folderList: elements.folderList,
+      fileManagerView: elements.fileManagerView,
+    });
+  } catch (e) {
+    console.error("Error initializing FileManager:", e);
   }
-  elements.hoverDeleteBtn.style.display = 'none';
-});
+} else {
+  console.warn("FileManager or its required DOM elements (folderList, fileManagerView) not found/initialized. File management may be affected.");
+}
 
-const ctx = elements.canvas.getContext('2d');
-
-elements.toggleBtn = document.getElementById('toggleAngleType');
+// Initialize canvas context (robust check)
+let ctx;
+if (elements.canvas) {
+  try {
+    ctx = elements.canvas.getContext('2d');
+  } catch (e) {
+    console.error("Error getting canvas context:", e);
+    if(elements.canvas) elements.canvas.style.border = "2px solid red";
+  }
+} else {
+  console.error("Canvas element ('overlay') not found! Annotations will not work.");
+}
 
 const state = {
   annotationActive: false,
@@ -57,13 +78,6 @@ const state = {
 };
 
 const data = [];
-
-const btnDownloadCsv = document.getElementById('btnDownloadCsv');
-
-btnDownloadCsv.addEventListener("click",()=>{
-  downloadCsv("results.csv", json2csv.parse(data));
-});
-
 /**
  * Creates a hidden download link for CSV data and programmatically clicks it to trigger a file download of the data
  * Data must already by in CSV format
@@ -92,9 +106,9 @@ function init() {
   setupDragAndDrop();
   createAddFrameTile();
   setupSidebarToggle();
+  setupNewProjectModal();
+  setupLoginModal();
   testFetchData();
-  elements.speedSelect = document.getElementById('speedSelect');
-  elements.speedValue  = document.getElementById('speedValue');
 
   elements.video.playbackRate = parseFloat(elements.speedSelect.value);
 
@@ -103,12 +117,6 @@ function init() {
     elements.video.playbackRate = speed;
     elements.speedValue.textContent = speed.toFixed(2) + 'x';
   });
-  
-//   elements.speedSlider.addEventListener('input', () => {
-//   const speed = parseFloat(elements.speedSlider.value);
-//   elements.video.playbackRate = speed;
-//   elements.speedValue.textContent = speed.toFixed(2) + 'x';
-// });
 
   elements.toggleBtn.style.display = 'inline-block';
   elements.toggleBtn.addEventListener('click', () => {
@@ -129,6 +137,72 @@ function init() {
     }
   });
 }
+
+function setupNewProjectModal() {
+  if (!elements.newProjectModal) {
+    console.error("New Project Modal element not found!");
+    return;
+  }
+
+  elements.addProjectBox.addEventListener('click', () => {
+    elements.newProjectModal.style.display = 'flex';
+    elements.newProjectInput.value = '';
+    elements.newProjectInput.focus();
+  });
+
+  elements.confirmModalBtn.addEventListener('click', async () => {
+    const folderName = elements.newProjectInput.value.trim();
+    if (!folderName) {
+      console.log("Folder name cannot be empty.");
+      return;
+    }
+    elements.newProjectModal.style.display = 'none';
+    console.log("New Project Modal Hidden");
+    try {
+      const payload = { name: folderName };
+      console.log("Payload for folder creation:", payload); 
+      const response = await ipcRenderer.invoke('post-data', {
+        endpoint: 'api/folders/',
+        payload,
+      });
+      console.log("Response from main process for folder creation:", response);
+      if (response.success) {
+        console.log("Project created successfully");
+        if (typeof FileManager !== 'undefined' && FileManager.refreshNow) {
+          FileManager.refreshNow();
+        }
+      } else {
+        alert("Failed to create project: " + response.error);
+      }
+    } catch (error) {
+      console.error("Error creating project:", error);
+      alert("An error occurred while creating the project.");
+    }
+  });
+
+  elements.cancelModalBtn.addEventListener('click', () => {
+    elements.newProjectModal.style.display = 'none';
+    console.log("New Project Modal Hidden");
+  });
+}
+
+function setupLoginModal() {
+  if (!elements.loginModal) {
+    console.error("Login Modal element not found!");
+    return;
+  }
+
+  elements.openLoginBtn.addEventListener('click', () => {
+    elements.loginModal.style.display = 'flex';
+  });
+
+  elements.loginModal.addEventListener('click', (event) => {
+    if (elements.modalContent && !elements.modalContent.contains(event.target)) {
+      elements.loginModal.style.display = 'none';
+    }
+  });
+}
+
 
 function setupSidebarToggle() {
   elements.toggleVideoLibraryBtn.addEventListener('click', () => showView('video-library'));
@@ -190,15 +264,15 @@ function setupEventListeners() {
 
   elements.saveAngleBtn.addEventListener('click', saveAngle);
 
-  window.addEventListener('resize', resizeCanvasToVideo);
-
   elements.video.addEventListener('timeupdate', checkAndRenderAngles);
 
-  document.getElementById('deleteSelectedAngle').addEventListener('click', deleteSelectedAngle);
+  elements.deleteSelectedAngleBtn.addEventListener('click', deleteSelectedAngle);
 
   elements.videoContainer.addEventListener('mousemove', handleCanvasMouseMove);
 
   elements.createCheckpointBtn.addEventListener('click', createCheckpoint);
+
+  window.addEventListener('resize', resizeCanvasToVideo);
 }
 
 /**
@@ -910,55 +984,7 @@ function handleCanvasMouseMove(event) {
   } else {
     btn.style.display = 'none';
   }
-
 }
-
-window.addEventListener('DOMContentLoaded', () => {
-  const addProjectBox = document.getElementById('addProjectBox');
-  const modal = document.getElementById('newProjectModal');
-  const input = document.getElementById('newProjectInput');
-  const confirmBtn = document.getElementById('confirmModalBtn');
-  const cancelBtn = document.getElementById('cancelModalBtn');
-
-  if (!addProjectBox || !modal || !input || !confirmBtn || !cancelBtn) {
-    console.error("Modal elements not found in DOM");
-    return;
-  }
-
-  addProjectBox.addEventListener('click', () => {
-    input.value = '';
-    modal.style.display = 'flex';
-    input.focus();
-  });
-
-  confirmBtn.addEventListener('click', async () => {
-    const folderName = input.value.trim();
-    if (!folderName) {
-      console.log()
-      return;
-    }
-
-    modal.style.display = 'none';
-
-    const response = await ipcRenderer.invoke('post-data', {
-      endpoint: 'api/folders/',
-      payload: { name: folderName }
-    });
-
-    if (response.success) {
-      console.log("Project created. Forcing folder list refresh.");
-      FileManager.refreshNow();
-    } else {
-      alert("Failed to create project: " + response.error);
-    }
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
-});
-
-
 /**
  * Creates a new checkpoint at the current video time
  */
@@ -1071,17 +1097,17 @@ function updateCheckpointVisibility() {
   });
 }
 
-const modal = document.getElementById('loginModal');
-const modalContent = document.getElementById('modalContent');
+// const modal = document.getElementById('loginModal');
+// const modalContent = document.getElementById('modalContent');
 
-document.getElementById('openLogin').addEventListener('click', () => {
-  modal.style.display = 'flex';
-});
+// document.getElementById('openLogin').addEventListener('click', () => {
+//   modal.style.display = 'flex';
+// });
 
-modal.addEventListener('click', (e) => {
-  if (!modalContent.contains(e.target)) {
-    modal.style.display = 'none';
-  }
-});
+// modal.addEventListener('click', (e) => {
+//   if (!modalContent.contains(e.target)) {
+//     modal.style.display = 'none';
+//   }
+// });
 
 init();

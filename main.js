@@ -248,53 +248,70 @@ const createWindow = async () => {
 
 ipcMain.handle('fetch-data', async (event, endpoint) => {
     const url = `http://127.0.0.1:8000/${endpoint}`;
-    console.log('Fetching data from:', url);
+    console.log(`Main: Received 'fetch-data' IPC. Endpoint: '${endpoint}', Target URL: ${url}`);
 
     const isDev = !app.isPackaged;
 
     if (!isDev && !djangoServerProcess && !(await checkServerHealth())) {
-
         const errorMsg = 'Backend Server is not running or has been stopped.';
         console.error(`Main: ${errorMsg}`);
         return { success: false, error: errorMsg };
     }
 
     try {
-        const response = await fetch(url, { timeout: 10000});
+         console.log(`Main: Attempting GET to ${url}`);
+        const response = await fetch(url, {
+            method: 'GET', 
+            timeout: 10000
+        });
+
+        console.log(`Main: GET response status from ${url}: ${response.status}`); 
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Main: HTTP error! status: ${response.status}, message: ${errorText.substring(0,500)}`);
-            throw new Error(`HTTP error ${response.status}: ${errorText.substring(0, 200)}`);
+        const errorText = await response.text();
+        console.error(`Main: POST HTTP error! Status: ${response.status}, Body: ${errorText.substring(0, 500)}`); 
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0,200)}`);
         }
+
         const data = await response.json();
-        return { success: true, data: data };
-    } catch (error) {
-        console.error(`Main: Error fetching data from: ${url}`, error);
-        return { success: false, error: error.message }; 
+        console.log(`Main: POST to ${url} successful. Response data:`, data); 
+        return { success: true, data };
+    } catch (err) {
+        console.error(`Main: POST to ${url} failed. Error:`, err); 
+        return { success: false, error: err.message };
     }
 });
 
 ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
-  const url = `http://127.0.0.1:8000/${endpoint}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    const url = `http://127.0.0.1:8000/${endpoint}`;
+    console.log(`Main: Received 'post-data' IPC. Endpoint: '${endpoint}', Payload:`, payload, `Target URL: ${url}`);
+    const isDev = !app.isPackaged;
+    if ((isDev && !djangoServerProcess) || (!isDev && !(await checkServerHealth()))) {
+        const errorMsg = 'Main: Backend Server is not running or not healthy (post-data).';
+        console.error(errorMsg);
+        return { success: false, error: errorMsg };
     }
+    
+    try {
+        console.log(`Main: Attempting POST to ${url} with payload:`, JSON.stringify(payload));
+        const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        timeout: 10000
+        });
 
-    const data = await response.json();
-    return { success: true, data };
-  } catch (err) {
-    console.error("Main: POST failed", err);
-    return { success: false, error: err.message };
-  }
+        if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        return { success: true, data };
+    } catch (err) {
+        console.error("Main: POST failed", err);
+        return { success: false, error: err.message };
+    }
 });
 
 
