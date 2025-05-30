@@ -36,7 +36,6 @@ const elements = {
   loginModal: document.getElementById('loginModal'),
   modalContent: document.getElementById('modalContent'), 
   openLoginBtn: document.getElementById('openLogin'),
-  placeholder: document.getElementById('placeholder-message'),
 };
 
 if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileManagerView) {
@@ -392,7 +391,7 @@ function updateVideoList() {
 
 /**
  * Validates the index, updates the current video state, highlights the selected list item, loads and displays the
- * chosen video via a blob URL, hides the placeholder, clears any existing annotations, and shows frame items only for
+ * chosen video via a blob URL clears any existing annotations, and shows frame items only for
  * the selected video while hiding others.
  * @param {integer} index the position of the video in state.videoFiles to select
  */
@@ -406,7 +405,6 @@ function deleteVideo(index) {
     state.currentVideoIndex = -1;
     elements.video.src = '';
     elements.video.load();
-    elements.placeholder.style.display = 'block';
     elements.video.style.display = 'none';
     clearAnnotations();
   } else if (index < state.currentVideoIndex) {
@@ -415,6 +413,40 @@ function deleteVideo(index) {
 
   updateVideoList();
 }
+
+/**
+ * Loads a video from the file manager (database) into the player.
+ * @param {string} videoPath The relative path to the video file (e.g., /media/videos/file.mp4)
+ * @param {string} videoTitle The title of the video.
+ */
+window.loadVideoFromManager = function(videoPath, videoTitle) {
+  if (!videoPath ) {
+    console.error("Video path is required to load a video.");
+    elements.result.textContent = "Error: Video path is required.";
+    return;
+  }
+
+  let fullVideoUrl;
+  if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) {
+    fullVideoUrl = videoPath;
+  }
+
+  console.log(`Loading video from manager: ${videoTitle} (URL: ${fullVideoUrl})`);
+  state.currentVideoIndex = -1;
+  document.querySelectorAll('#videoList li').forEach(li => li.classList.remove('active'));
+  
+  document.querySelectorAll('.frame-item').forEach(item => {
+    if (item !== addTile) {
+      item.style.display = 'none';
+    }
+  });
+  updateCheckpointVisibility();
+  elements.video.src = fullVideoUrl;
+  elements.video.load();
+  elements.video.style.display = 'block';
+  
+  clearAnnotations();
+};
 
 function selectVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
