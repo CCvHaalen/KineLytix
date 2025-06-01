@@ -4,93 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Angle Measurement App</title>
-  <!-- linking the main CSS file -->
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <!-- script for CSV export (json2csv) -->
+  <!-- json2csv for CSV export -->
   <script src="https://cdn.jsdelivr.net/npm/json2csv"></script>
 
   <div class="app-container">
-    <!-- Icon Toggle Sidebar -->
     <div id="toggle-sidebar" class="toggle-sidebar">
-      <button id="toggleVideoLibrary" class="toggle-btn active" title="Video Library">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-      </button>
-      <button id="toggleFileManager" class="toggle-btn" title="File Manager">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-      </button>
+      <button id="toggleVideoLibrary" class="toggle-btn active" title="Video Library"></button>
+      <button id="toggleFileManager" class="toggle-btn" title="File Manager"></button>
     </div>
 
-    <!-- Sidebar -->
     <div id="sidebar" class="sidebar">
-      <!-- Video Library View -->
       <div id="video-library-view" class="sidebar-view active-view">
         <h2>Video Library</h2>
         <div class="drop-area-container">
           <div class="drop-area" id="dropArea">
-            <div class="drop-instructions">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              <p>Drop video files here</p>
-              <p class="small-text">(mp4, mov, webm)</p>
-            </div>
+            <div class="drop-instructions"></div>
           </div>
         </div>
-        <div class="video-list-header">
-          <h3>Imported Videos</h3>
-        </div>
+        <h3>Imported Videos</h3>
         <ul id="videoList" class="video-list"></ul>
         <input type="file" id="videoFile" accept="video/mp4,video/quicktime,video/webm" multiple hidden />
       </div>
-
-      <!-- File Manager View -->
       <div id="file-manager-view" class="sidebar-view">
         <h2>File Manager</h2>
         <div class="file-manager-content">
           <p>Database files loaded here</p>
           <ul id="folderList"></ul>
-          <div id="addProjectBox" class="add-project-box">
-            + New Project
-          </div>
+          <div id="addProjectBox" class="add-project-box">+ New Project</div>
         </div>
       </div>
-    </div> 
-    <!-- End of sidebar -->
+    </div>
 
-    <!-- Main Content Area --->
     <div class="main-content">
       <h1>Video Angle Measurement App</h1>
 
-      <!-- video player area -->
       <div id="video-container">
         <video id="video" controls></video>
         <canvas id="overlay"></canvas>
-        <!-- shows up on hover when deleting -->
-        <button id="hoverDeleteBtn" class="delete-btn" style="display:none;">×</button>
+        <button id="hoverDeleteBtn" class="delete-btn" style="display:none;">x</button>
+        <canvas id="captureCanvas" style="display: none;"></canvas>
       </div>
 
-      <!-- timeline thumbnails go here -->
       <div class="timeline-container">
         <div class="timeline-section">
           <h4>Saved Frames</h4>
-          <div id="frameBar" class="frame-bar">
-            <!-- Frames will be added here -->
-          </div>
+          <div id="frameBar" class="frame-bar"></div>
         </div>
-        
         <div class="timeline-section">
           <h4>Checkpoints</h4>
-          <div id="checkpointList" class="checkpoint-list">
-            <!-- Checkpoints will be added here -->
-          </div>
+          <div id="checkpointList" class="checkpoint-list"></div>
         </div>
       </div>
 
-      <!-- buttons for interacting with annotations etc. -->
       <div class="controls">
         <button id="activateAnnotation" class="btn primary">Measure Angle</button>
         <button id="clearAnnotation" class="btn">Clear Annotation</button>
@@ -99,12 +67,13 @@
         <button id="saveAngle" class="btn" style="display:none;">Save Angle</button>
         <button id="deleteSelectedAngle" class="btn" style="display:none;">Delete Selected Angle</button>
         <button id="createCheckpoint" class="btn">Create Checkpoint</button>
-        <button type="button" id="btnDownloadCsv" class="btn">Download CSV</button>
+        <button id="btnDownloadCsv" class="btn">Download CSV</button>
+        <button id="detectJoints" class="btn" style="margin-left: 1rem;">Detect Joints</button>
 
-        <!-- shows angle result after measurement -->
         <div id="result" class="result-display"></div>
+        <div id="poseStatus" style="color: red; margin-top: 0.5rem;"></div>
+        <div id="poseResult" style="margin-top: 1.5rem; text-align: center;"></div>
 
-        <!-- control for playback speed -->
         <div class="speed-control">
           <label for="speedSelect">Speed:</label>
           <select id="speedSelect">
@@ -114,24 +83,190 @@
             <option value="1" selected>1x</option>
             <option value="1.5">1.5x</option>
             <option value="2">2x</option>
-            </select>
+          </select>
           <span id="speedValue">1x</span>
         </div>
       </div>
     </div>
   </div>
-   <!-- main JS logic -->
-  <script src ="./fileManager.js"></script>
+
+  <script src="./fileManager.js"></script>
   <script src="./script.js"></script>
+
+  <script>
+    console.log("inline script loaded");
+
+    const savedData = [];
+    const video = document.getElementById('video');
+    const captureCanvas = document.getElementById('captureCanvas');
+    const btnDetect = document.getElementById('detectJoints');
+    const statusDiv = document.getElementById('poseStatus');
+    const poseResultDiv = document.getElementById('poseResult');
+
+    function downloadCsv(csvString) {
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `angle_data_${Date.now()}.csv`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    btnDetect.addEventListener('click', () => {
+      console.log("Detect Joints clicked");
+      if (!video) return;
+
+      statusDiv.textContent = '';
+      poseResultDiv.innerHTML = '';
+
+      video.pause();
+      captureCanvas.width = video.videoWidth;
+      captureCanvas.height = video.videoHeight;
+      const ctx = captureCanvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+
+      captureCanvas.toBlob(async (blob) => {
+        if (!blob) {
+          statusDiv.style.color = 'red';
+          statusDiv.textContent = 'Failed to capture frame.';
+          return;
+        }
+
+        statusDiv.style.color = 'black';
+        statusDiv.textContent = 'Detecting joints...';
+
+        try {
+          const formData = new FormData();
+          formData.append('frame', blob, 'paused_frame.png');
+
+          const response = await fetch('http://127.0.0.1:8000/api/pose-detect/', {
+            method: 'POST',
+            body: formData
+          });
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+          }
+
+          const data = await response.json();
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          statusDiv.textContent = '';
+
+          const img = document.createElement('img');
+          img.id = 'annotated-img';
+          img.src = data.annotated_image;
+          img.style.maxWidth = '800px';
+          img.style.border = '1px solid #333';
+          poseResultDiv.appendChild(img);
+
+          const ul = document.createElement('ul');
+          ul.id = 'angles-list';
+          ul.style.listStyle = 'none';
+          ul.style.padding = '0';
+          ul.style.marginTop = '1rem';
+
+          const elRight = document.createElement('li');
+          elRight.textContent = `Right Elbow: ${data.angles.right_elbow.toFixed(2)}°`;
+          ul.appendChild(elRight);
+          const elLeft = document.createElement('li');
+          elLeft.textContent = `Left Elbow: ${data.angles.left_elbow.toFixed(2)}°`;
+          ul.appendChild(elLeft);
+
+          const knRight = document.createElement('li');
+          knRight.textContent = `Right Knee: ${data.angles.right_knee.toFixed(2)}°`;
+          ul.appendChild(knRight);
+          const knLeft = document.createElement('li');
+          knLeft.textContent = `Left Knee: ${data.angles.left_knee.toFixed(2)}°`;
+          ul.appendChild(knLeft);
+
+          const shRight = document.createElement('li');
+          shRight.textContent = `Right Shoulder: ${data.angles.right_shoulder.toFixed(2)}°`;
+          ul.appendChild(shRight);
+          const shLeft = document.createElement('li');
+          shLeft.textContent = `Left Shoulder: ${data.angles.left_shoulder.toFixed(2)}°`;
+          ul.appendChild(shLeft);
+
+          const wrRight = document.createElement('li');
+          wrRight.textContent = `Right Wrist: ${data.angles.right_wrist.toFixed(2)}°`;
+          ul.appendChild(wrRight);
+          const wrLeft = document.createElement('li');
+          wrLeft.textContent = `Left Wrist: ${data.angles.left_wrist.toFixed(2)}°`;
+          ul.appendChild(wrLeft);
+
+          poseResultDiv.appendChild(ul);
+
+          const currentTimestamp  = video.currentTime.toFixed(2);
+          const currentFrameIndex = Math.round(video.currentTime * 30);
+
+          const thisRecord = {
+            frameIndex:      currentFrameIndex,
+            timestamp:       currentTimestamp,
+            right_elbow:     data.angles.right_elbow,
+            left_elbow:      data.angles.left_elbow,
+            right_knee:      data.angles.right_knee,
+            left_knee:       data.angles.left_knee,
+            right_shoulder:  data.angles.right_shoulder,
+            left_shoulder:   data.angles.left_shoulder,
+            right_wrist:     data.angles.right_wrist,
+            left_wrist:      data.angles.left_wrist
+          };
+          savedData.push(thisRecord);
+
+        } catch (err) {
+          console.error("Error in fetch:", err);
+          statusDiv.style.color = 'red';
+          statusDiv.textContent = 'Error: ' + err.message;
+        }
+      }, 'image/png');
+    });
+
+    const downloadCsvButton = document.getElementById('btnDownloadCsv');
+    console.log("downloadCsvButton:", downloadCsvButton);
+    downloadCsvButton.addEventListener('click', () => {
+      if (savedData.length === 0) {
+        alert('No data to download.');
+        return;
+      }
+
+      const fields = [
+        'frameIndex',
+        'timestamp',
+        'right_elbow',
+        'left_elbow',
+        'right_knee',
+        'left_knee',
+        'right_shoulder',
+        'left_shoulder',
+        'right_wrist',
+        'left_wrist'
+      ];
+
+      try {
+        const { parse } = window.json2csv;
+        const csv = parse(savedData, { fields });
+        downloadCsv(csv);
+      } catch (err) {
+        console.error(err);
+        alert('Error generating CSV: ' + err.message);
+      }
+    });
+  </script>
+
   <div id="newProjectModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>Create New Project</h3>
-    <input id="newProjectInput" type="text" placeholder="Project name" />
-    <div class="modal-actions">
-      <button id="cancelModalBtn" class="btn">Cancel</button>
-      <button id="confirmModalBtn" class="btn primary">Create</button>
+    <div class="modal-content">
+      <h3>Create New Project</h3>
+      <input id="newProjectInput" type="text" placeholder="Project name" />
+      <div class="modal-actions">
+        <button id="cancelModalBtn" class="btn">Cancel</button>
+        <button id="confirmModalBtn" class="btn primary">Create</button>
+      </div>
     </div>
   </div>
-</div>
 </body>
 </html>

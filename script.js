@@ -883,6 +883,7 @@ function handleCanvasMouseMove(event) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  init();
   const addProjectBox = document.getElementById('addProjectBox');
   const modal = document.getElementById('newProjectModal');
   const input = document.getElementById('newProjectInput');
