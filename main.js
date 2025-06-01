@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
+const fs = require('fs')
 const { spawn } = require('child_process')
 const fetch = require('node-fetch');
 
@@ -11,100 +12,157 @@ function getBackendPath() {
     if (isDev) {
         return path.join(__dirname, '..', 'TNO-Backend');
     } else {
-        return path.join(process.resourcesPath, 'app', 'TNO-Backend');
+        return path.join(process.resourcesPath, 'TNO-Backend');
     }
 }
-function startDjangoServer() {
-    return new Promise((resolve, reject) => {
+
+// env: { ...process.env, PYTHONUNBUFFERED: '1' }
+
+const sleep = ms => new Promise(res => setTimeout(res, ms));
+async function startDjangoServer() {
+    return new Promise(async (resolve, reject) => {
         const backendPath = getBackendPath();
-        const managePyPath = path.join(backendPath, 'manage.py');
+        const managePy = path.join(backendPath, 'manage.py');
+        const venvPy = process.platform === 'win32'
+            ? path.join(backendPath, 'venv', 'Scripts', 'python.exe')
+            : path.join(backendPath, 'venv', 'bin', 'python');
 
-        let pythonExecutable = 'python'; // Default to system python
-        const venvPythonPathWin = path.join(backendPath, 'venv', 'Scripts', 'python.exe');
-        const venvPythonPathNonWin = path.join(backendPath, 'venv', 'bin', 'python');
-
-        if (process.platform === 'win32') {
-            if (require('fs').existsSync(venvPythonPathWin)) {
-                pythonExecutable = venvPythonPathWin;
-            } else {
-                console.warn(`Virtual environment Python not found at ${venvPythonPathWin}. Falling back to system 'python'.`);
-            }
-        } else { // For macOS, Linux
-            if (require('fs').existsSync(venvPythonPathNonWin)) {
-                pythonExecutable = venvPythonPathNonWin;
-            } else {
-                console.warn(`Virtual environment Python not found at ${venvPythonPathNonWin}. Falling back to system 'python'.`);
-            }
+        if (!fs.existsSync(managePy)) {
+            console.error(`manage.py not found at ${managePy}`);
+            return reject(new Error(`manage.py not found at ${managePy}`))
         }
-        
-        console.log(`Backend path: ${backendPath}`);
-        console.log(`Using Python executable: ${pythonExecutable}`);
-        console.log(`Using manage.py: ${managePyPath}`);
-
-        if (!require('fs').existsSync(managePyPath)) {
-            const errorMsg = `manage.py not found at ${managePyPath}`;
-            console.error(errorMsg);
-            dialog.showErrorBox("Backend Error", `${errorMsg}\nPlease ensure the backend is correctly packaged.`);
-            return reject(new Error(errorMsg));
+        if (!fs.existsSync(venvPy)) {
+            console.error(`Python executable not found at ${venvPy}`);
+            return reject(new Error(`Python executable not found at ${venvPy}. Ensure TNO-Backend/venv is correctly packaged.`));
         }
 
-        djangoServerProcess = spawn(pythonExecutable, [managePyPath, 'runserver', '--noreload', '127.0.0.1:8000'], {
+        const logDir = app.getPath('userData');
+        const logPath = path.join(logDir, 'backend.log');
+        fs.mkdirSync(logDir, { recursive: true });
+        fs.writeFileSync(logPath, `=== Starting backend at ${new Date().toISOString()} ===\n`);
+        console.log(`Backend log → ${logPath}`);    
+
+        const isDev = !app.isPackaged;
+        const args = isDev
+        ? [ managePy, 'runserver', '--noreload', '127.0.0.1:8000' ]
+        : [ '-m', 'waitress', '--port=8000', 'mysite.wsgi:application' ];
+
+        const env = {
+        ...process.env,
+        PYTHONUNBUFFERED: '1',
+        ...(isDev ? {} : { DJANGO_SETTINGS_MODULE: 'mysite.settings_prod' })
+        };
+
+        console.log(`Spawning: ${venvPy} with args: ${args.join(' ')} in ${backendPath}`);
+        const spawnedProcess = spawn(venvPy, args, {
             cwd: backendPath,
-            stdio: ['ignore', 'pipe', 'pipe'], 
-            env: { ...process.env, PYTHONUNBUFFERED: '1' } // Option to try if buffering is suspected
+            env: env,
+            stdio: ['ignore', 'pipe', 'pipe']
         });
+        djangoServerProcess = spawnedProcess; 
 
-        let serverStarted = false;
-        const serverStartTimeout = 45000; 
+        try {
+            const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+            spawnedProcess.stdout.pipe(logStream);
+            spawnedProcess.stderr.pipe(logStream);
+        } catch (e) {
+            console.error('Failed to pipe backend output to log file:', e);
+        }
 
-        const timeoutId = setTimeout(() => {
-            if (!serverStarted) {
-                console.error("Django server startup timed out. Killing process.");
-                if (djangoServerProcess && !djangoServerProcess.killed) {
-                    djangoServerProcess.kill('SIGKILL'); 
+        if (djangoServerProcess) {
+            djangoServerProcess.on('exit', (code, signal) => {
+                const exitMsg = `CRITICAL: djangoServerProcess exited (post-startup or during) with code ${code}, signal ${signal}. Server is now down.`;
+                console.error(exitMsg);
+                if (fs.existsSync(logPath)) {
+                    try { fs.appendFileSync(logPath, `\n${exitMsg}\n`); } catch (e) { console.error("Failed to write exit msg to backend.log", e); }
                 }
-                reject(new Error("Django server failed to start within the timeout period. Check console for Django's output."));
-            }
-        }, serverStartTimeout);
+                djangoServerProcess = null; 
+            });
+            djangoServerProcess.on('error', (err) => { 
+                const errorMsg = `CRITICAL: djangoServerProcess emitted error (post-startup or during): ${err.message}. Server might be down.`;
+                console.error(errorMsg);
+                if (fs.existsSync(logPath)) {
+                    try { fs.appendFileSync(logPath, `\n${errorMsg}\n`); } catch (e) { console.error("Failed to write error msg to backend.log", e); }
+                }
+                djangoServerProcess = null; 
+            });
+        }        
 
-        let stdoutBuffer = '';
-        djangoServerProcess.stdout.on('data', (data) => {
-            const output = data.toString();
-            stdoutBuffer += output;
-            console.log(`Django stdout chunk: ${output}`); // CRITICAL LOGGING
-            if (stdoutBuffer.includes('Starting development server at http://127.0.0.1:8000/') || 
-                stdoutBuffer.includes('Quit the server with CTRL-BREAK') || 
-                stdoutBuffer.includes('Quit the server with CONTROL-C')) {
-                if (!serverStarted) {
-                    serverStarted = true;
-                    clearTimeout(timeoutId);
-                    console.log("Django server detected as started successfully.");
+        if (isDev) {
+            let buffer = '';
+            const timeout = setTimeout(() => {
+                console.error('Dev server start timed out. Killing process.');
+                spawnedProcess.kill('SIGKILL');
+                reject(new Error('Dev server start timed out'));
+            }, 20000); // 20 seconds for dev server
+
+            spawnedProcess.stdout.on('data', (chunk) => {
+                const output = chunk.toString();
+                buffer += output;
+                console.log('Dev Django stdout:', output.trim());
+                if (buffer.includes('Starting development server')) {
+                    clearTimeout(timeout);
+                    console.log('Dev server started successfully.');
                     resolve();
                 }
+            });
+
+            spawnedProcess.stderr.on('data', (chunk) => {
+                console.error('Dev Django stderr:', chunk.toString().trim());
+            });
+
+            spawnedProcess.on('error', (err) => {
+                clearTimeout(timeout);
+                console.error('Dev Django spawn error:', err);
+                reject(err);
+            });
+
+            spawnedProcess.on('close', (code) => {
+                clearTimeout(timeout);
+                console.log(`Dev Django server exited with code ${code}`);
+                // Only reject if it hasn't resolved yet (i.e., "Starting development server" was not seen)
+                if (!buffer.includes('Starting development server')) {
+                    reject(new Error(`Dev server exited (${code}) before start`));
+                }
+            });
+            return;
+        }
+
+        // Production (Waitress) path
+        console.log('Starting production server health check loop...');
+        const start = Date.now();
+        const maxWait = 30000;
+
+        spawnedProcess.on('error', (err) => {
+            console.error('Production Django spawn error:', err);
+            // The health check loop will eventually timeout and reject
+        });
+
+        spawnedProcess.on('close', (code) => {
+            console.log(`Production Django server exited with code ${code}.`);
+            // The health check loop will eventually timeout and reject if server doesn't become healthy
+        });
+        
+        // Log any stdout/stderr from waitress immediately for debugging
+        spawnedProcess.stdout.on('data', (chunk) => {
+            console.log('Production Django stdout:', chunk.toString().trim());
+        });
+        spawnedProcess.stderr.on('data', (chunk) => {
+            console.error('Production Django stderr:', chunk.toString().trim());
+        });
+
+        while (Date.now() - start < maxWait) {
+            await sleep(1000); // Check every second
+            if (await checkServerHealth()) {
+                console.log('Production server health check successful.');
+                return resolve();
             }
-        });
-
-        let stderrBuffer = '';
-        djangoServerProcess.stderr.on('data', (data) => {
-            const errorOutput = data.toString();
-            stderrBuffer += errorOutput;
-            console.error(`Django stderr chunk: ${errorOutput}`); // CRITICAL LOGGING
-        });
-
-        djangoServerProcess.on('close', (code, signal) => {
-            console.log(`Django server process exited with code ${code} and signal ${signal}`);
-            if (!serverStarted) { 
-                clearTimeout(timeoutId);
-                reject(new Error(`Django server failed to start. Exited with code ${code}, signal ${signal}. Full stderr: ${stderrBuffer.substring(0, 1000)}`));
-            }
-            djangoServerProcess = null;
-        });
-
-        djangoServerProcess.on('error', (err) => {
-            clearTimeout(timeoutId);
-            console.error('Failed to spawn Django server process:', err);
-            reject(err);
-        });
+            console.log('Production server health check pending...');
+        }
+        
+        console.error('Production server health check timed out. Killing process.');
+        spawnedProcess.kill('SIGKILL');
+        reject(new Error('Production server start timed out after health checks. Check backend.log.'));
     });
 }
 
@@ -190,61 +248,80 @@ const createWindow = async () => {
 
 ipcMain.handle('fetch-data', async (event, endpoint) => {
     const url = `http://127.0.0.1:8000/${endpoint}`;
-    console.log('Fetching data from:', url);
+    console.log(`Main: Received 'fetch-data' IPC. Endpoint: '${endpoint}', Target URL: ${url}`);
 
     const isDev = !app.isPackaged;
 
     if (!isDev && !djangoServerProcess && !(await checkServerHealth())) {
-
-        const errorMsg = 'Backend Sserver is not running or has been stopped.';
+        const errorMsg = 'Backend Server is not running or has been stopped.';
         console.error(`Main: ${errorMsg}`);
         return { success: false, error: errorMsg };
     }
 
     try {
-        const response = await fetch(url, { timeout: 10000});
+         console.log(`Main: Attempting GET to ${url}`);
+        const response = await fetch(url, {
+            method: 'GET', 
+            timeout: 10000
+        });
+
+        console.log(`Main: GET response status from ${url}: ${response.status}`); 
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Main: HTTP error! status: ${response.status}, message: ${errorText.substring(0,500)}`);
-            throw new Error(`HTTP error ${response.status}: ${errorText.substring(0, 200)}`);
+        const errorText = await response.text();
+        console.error(`Main: POST HTTP error! Status: ${response.status}, Body: ${errorText.substring(0, 500)}`); 
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0,200)}`);
         }
+
         const data = await response.json();
-        return { success: true, data: data };
-    } catch (error) {
-        console.error(`Main: Error fetching data from: ${url}`, error);
-        return { success: false, error: error.message }; 
+        console.log(`Main: POST to ${url} successful. Response data:`, data); 
+        return { success: true, data };
+    } catch (err) {
+        console.error(`Main: POST to ${url} failed. Error:`, err); 
+        return { success: false, error: err.message };
     }
 });
 
 ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
-  const url = `http://127.0.0.1:8000/${endpoint}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    const url = `http://127.0.0.1:8000/${endpoint}`;
+    console.log(`Main: Received 'post-data' IPC. Endpoint: '${endpoint}', Payload:`, payload, `Target URL: ${url}`);
+    const isDev = !app.isPackaged;
+    if ((isDev && !djangoServerProcess) || (!isDev && !(await checkServerHealth()))) {
+        const errorMsg = 'Main: Backend Server is not running or not healthy (post-data).';
+        console.error(errorMsg);
+        return { success: false, error: errorMsg };
     }
+    
+    try {
+        console.log(`Main: Attempting POST to ${url} with payload:`, JSON.stringify(payload));
+        const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        timeout: 10000
+        });
 
-    const data = await response.json();
-    return { success: true, data };
-  } catch (err) {
-    console.error("Main: POST failed", err);
-    return { success: false, error: err.message };
-  }
+        if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        return { success: true, data };
+    } catch (err) {
+        console.error("Main: POST failed", err);
+        return { success: false, error: err.message };
+    }
 });
 
 
 async function checkServerHealth() {
     try {
         const response = await fetch('http://127.0.0.1:8000/', { method: 'HEAD', timeout: 1000 }); // A lightweight check
-        return response.ok;
+        console.log(`Health check: Server responded to GET / with status ${response.status}`);
+        return true;
     } catch (error) {
+        console.log('Health check failed:', error);
         return false;
     }
 }
