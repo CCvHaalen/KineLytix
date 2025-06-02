@@ -1,4 +1,5 @@
 const { ipcRenderer } = require('electron');
+const path = require('path');
 
 const elements = {
   sidebar: document.getElementById('sidebar'),
@@ -36,6 +37,11 @@ const elements = {
   loginModal: document.getElementById('loginModal'),
   modalContent: document.getElementById('modalContent'), 
   openLoginBtn: document.getElementById('openLogin'),
+  saveToDbModal: document.getElementById('saveToDbModal'),
+  dbFolderSelect: document.getElementById('dbFolderSelect'),
+  dbVideoTitleInput: document.getElementById('dbVideoTitleInput'),
+  confirmSaveToDbBtn: document.getElementById('confirmSaveToDbBtn'),
+  cancelSaveToDbBtn: document.getElementById('cancelSaveToDbBtn'),
 };
 
 if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileManagerView) {
@@ -51,7 +57,6 @@ if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileMa
   console.warn("FileManager or its required DOM elements (folderList, fileManagerView) not found/initialized. File management may be affected.");
 }
 
-// Initialize canvas context (robust check)
 let ctx;
 if (elements.canvas) {
   try {
@@ -74,6 +79,7 @@ const state = {
   selectedAngle: null,
   hoveredAngle: null,
   showInnerAngle: true,
+  currentDbVideoTitle: null,
 };
 
 const data = [];
@@ -86,7 +92,7 @@ const data = [];
 function downloadCsv(filename, csvData) {
   const element= document.createElement("a");
 
-  element.setAttribute("href",`data:text/csv;charset=utf-8,${csvData}`);
+  element.setAttribute("href",`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`);
   element.setAttribute("download", filename);
   element.style.display = "none";
 
@@ -107,6 +113,7 @@ function init() {
   setupSidebarToggle();
   setupNewProjectModal();
   setupLoginModal();
+  setupSaveToDbModal();
   testFetchData();
 
   elements.video.playbackRate = parseFloat(elements.speedSelect.value);
@@ -202,6 +209,182 @@ function setupLoginModal() {
   });
 }
 
+function setupSaveToDbModal() {
+  if (!elements.saveToDbModal || !elements.cancelSaveToDbBtn || !elements.confirmSaveToDbBtn) {
+    console.error("Save to DB Modal elements not found!");
+    return;
+  }
+
+  elements.cancelSaveToDbBtn.addEventListener('click', () => {
+    elements.saveToDbModal.style.display = 'none';
+  });
+  
+  elements.confirmSaveToDbBtn.addEventListener('click', handleVideoUpload);
+  
+  populateFolderDropdown();
+}
+
+/**
+ * Opens the Save to DB modal and prepares it for the selected video
+ * @param {number} videoIndex The index of the video in the state.videoFiles array
+ */
+function promptAndSaveVideoToDb(videoIndex) {
+  if (videoIndex < 0 || videoIndex >= state.videoFiles.length) {
+    console.error("Invalid video index");
+    return;
+  }
+  
+  const videoFile = state.videoFiles[videoIndex];
+  
+  document.getElementById('dbVideoTitleInput').value = videoFile.name.replace(/\.[^/.]+$/, ""); // Set default title (filename without extension)
+  document.getElementById('dbVideoFileInput').value = "";
+  
+  populateFolderDropdown();
+  
+  state.currentDbVideoIndex = videoIndex;
+  
+  document.getElementById('saveToDbModal').style.display = 'flex';
+}
+
+/**
+ * Populates the folder dropdown with available folders from the server
+ */
+async function populateFolderDropdown() {
+  const folderSelect = document.getElementById('dbFolderSelect');
+  
+  try {
+    let folders = [];
+    if (typeof FileManager !== 'undefined' && FileManager.getFolders) {
+      folders = await FileManager.getFolders();
+    } else {
+      const result = await ipcRenderer.invoke('fetch-data', 'api/folders/');
+      if (result.success) {
+        folders = result.data;
+      } else {
+        console.error('Failed to fetch folders:', result.error);
+      }
+    }
+    
+    folderSelect.innerHTML = '';
+    
+    if (folders.length === 0) {
+      const option = document.createElement('option');
+      option.textContent = 'No folders available';
+      option.disabled = true;
+      option.selected = true;
+      folderSelect.appendChild(option);
+    } else {
+      const defaultOption = document.createElement('option');
+      defaultOption.textContent = 'Select a folder';
+      defaultOption.value = '';
+      defaultOption.selected = true;
+      defaultOption.disabled = true;
+      folderSelect.appendChild(defaultOption);
+      
+      folders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.id;
+        option.textContent = folder.name;
+        folderSelect.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading folders:', error);
+    folderSelect.innerHTML = '<option disabled selected>Error loading folders</option>';
+  }
+}
+
+/**
+ * Creates and submits the video upload payload from the saveToDbModal form
+ * Uses FormData to properly handle file uploads to the backend
+ */
+function handleVideoUpload() {
+  const folderSelect = document.getElementById('dbFolderSelect');
+  const fileInput = document.getElementById('dbVideoFileInput');
+  const titleInput = document.getElementById('dbVideoTitleInput');
+
+  if (!folderSelect.value) {
+    alert('Please select a folder');
+    return;
+  }
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert('Please select a video file');
+    return;
+  }
+
+  if (!titleInput.value.trim()) {
+    alert('Please enter a title for the video');
+    return;
+  }
+
+  const videoFile = fileInput.files[0];
+  const formData = new FormData();
+  
+  formData.append('title', titleInput.value.trim());
+  formData.append('folder', folderSelect.value);
+  formData.append('file', videoFile);
+
+  const saveBtn = document.getElementById('confirmSaveToDbBtn');
+  const originalText = saveBtn.textContent;
+  saveBtn.textContent = 'Uploading...';
+  saveBtn.disabled = true;
+
+  uploadVideoToServer(formData)
+    .then(result => {
+      if (result.success) {
+        alert('Video uploaded successfully!');
+        document.getElementById('saveToDbModal').style.display = 'none';
+        
+        if (typeof FileManager !== 'undefined' && FileManager.refreshNow) {
+          FileManager.refreshNow();
+        }
+      } else {
+        alert(`Upload failed: ${result.error}`);
+      }
+    })
+    .catch(error => {
+      alert(`Upload error: ${error.message}`);
+      console.error('Video upload error:', error);
+    })
+    .finally(() => {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    });
+}
+
+/**
+ * Handles sending the FormData to the backend server via main process
+ * @param {FormData} formData The form data containing title, folder, and file
+ * @returns {Promise<Object>} Promise that resolves to success/error response
+ */
+async function uploadVideoToServer(formData) {
+  const file = formData.get('file');
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = async function() {
+      try {
+        const payload = {
+          title: formData.get('title'),
+          folder: formData.get('folder'),
+          fileBuffer: reader.result,
+          fileName: file.name,
+          fileType: file.type
+        };
+                const response = await ipcRenderer.invoke('upload-video', payload);
+        resolve(response);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 
 function setupSidebarToggle() {
   elements.toggleVideoLibraryBtn.addEventListener('click', () => showView('video-library'));
@@ -226,7 +409,6 @@ function showView(viewName) {
 }
 
 
-// TEST FUNCTION TO FETCH DATA FROM BACKEND
 async function testFetchData() {
   console.log('Renderer: Sending test request to main process...');
   try {
@@ -270,6 +452,8 @@ function setupEventListeners() {
   elements.videoContainer.addEventListener('mousemove', handleCanvasMouseMove);
 
   elements.createCheckpointBtn.addEventListener('click', createCheckpoint);
+
+  elements.btnDownloadCsv.addEventListener('click', downloadCsv);
 
   window.addEventListener('resize', resizeCanvasToVideo);
 }
@@ -370,6 +554,19 @@ function updateVideoList() {
     if (index === state.currentVideoIndex) {
       li.classList.add('active');
     }
+
+    const actionButtonsContainer = document.createElement('div');
+    actionButtonsContainer.classList.add('video-item-actions');
+
+    const saveToDbBtn = document.createElement('button');
+    saveToDbBtn.textContent = 'Save to DB';
+    saveToDbBtn.className = 'btn btn-small btn-save-to-db';
+    saveToDbBtn.title = 'Save this video to the database';
+    saveToDbBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      promptAndSaveVideoToDb(index);
+    });
+    actionButtonsContainer.appendChild(saveToDbBtn);
     
     const deleteBtn = document.createElement('span');
     deleteBtn.textContent = '×';
@@ -378,8 +575,9 @@ function updateVideoList() {
       e.stopPropagation();
       deleteVideo(index);
     });
+    actionButtonsContainer.appendChild(deleteBtn);
 
-    li.appendChild(deleteBtn);
+    li.appendChild(actionButtonsContainer);
 
     li.addEventListener('click', () => {
       selectVideo(index);

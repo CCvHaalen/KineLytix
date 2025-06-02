@@ -190,6 +190,29 @@ h2 {
   padding-right: 24px;
 }
 
+.video-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-small {
+  padding: 3px 6px;
+  font-size: 0.8em;
+  margin-left: 5px; 
+}
+
+.btn-save-to-db {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+}
+
+.btn-save-to-db:hover {
+  background-color: #218838; 
+}
+
 .delete-btn {
   position: absolute;
   top: 50%;
@@ -651,12 +674,19 @@ h2 {
   margin-bottom: 10px;
 }
 
-.modal-content input {
+.modal-content input,
+.modal-content select.modal-input {
   width: 100%;
   padding: 8px;
   margin-bottom: 15px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
 }
 
 .modal-actions {

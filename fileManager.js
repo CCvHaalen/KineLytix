@@ -163,6 +163,43 @@ const FileManager = (() => {
     });
   }
 
+    async function _internalDeleteFolderLogic(folderId) {
+    if (!_ipcRenderer) {
+      console.error("FileManager: IPC Renderer not available for _internalDeleteFolderLogic.");
+      return { success: false, error: "IPC Renderer not initialized." };
+    }
+    try {
+      const result = await _ipcRenderer.invoke('delete-data', `api/folders/${folderId}/`);
+      if (result.success) {
+        fetchFoldersInternal();
+        return { success: true };
+      } else {
+        return { success: false, error: result.error || 'Unknown error from main process.' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || "IPC communication error." };
+    }
+  }
+
+    async function _fetchFoldersData() {
+      if (!_ipcRenderer) {
+          console.error("FileManager: IPC Renderer not available for _fetchFoldersData.");
+          return { success: false, error: "IPC Renderer not initialized.", data: [] };
+      }
+      try {
+          const result = await _ipcRenderer.invoke('fetch-data', 'api/folders/');
+          if (result.success && result.data) {
+              return { success: true, data: result.data };
+          } else {
+              console.error('Failed to fetch folders data:', result.error);
+              return { success: false, error: result.error || "Unknown error fetching folders", data: [] };
+          }
+      } catch (error) {
+          console.error('IPC Error fetching folders data:', error);
+          return { success: false, error: error.message, data: [] };
+      }
+    }
+
   return {
     init: (ipcRendererInstance, domElements) => {
       _ipcRenderer = ipcRendererInstance;
@@ -174,9 +211,29 @@ const FileManager = (() => {
     },
     refreshNow: () => {
       fetchFoldersInternal();
+    },
+    performDeleteFolder: async (folderId) => {
+      // User confirmation
+      if (!confirm(`Are you sure you want to delete folder (ID: ${folderId}) and all its contents? This action cannot be undone.`)) {
+        return { success: false, error: "User cancelled deletion." }; 
+      }
+      // Actual deletion logic
+      const result = await _internalDeleteFolderLogic(folderId);
+      if (result.success) {
+        alert('Folder deleted successfully.');
+      } else {
+        alert(`Failed to delete folder: ${result.error}`);
+      }
+      return result; // Return result for potential further handling
+    },
+    getFolders: async () => {
+      const result = await _fetchFoldersData();
+      return result.data;
     }
   };
 })();
+
+
 
 function exportFolderToCSV(folderId) {
   // TODO: Fetch data and export CSV
@@ -186,8 +243,12 @@ function renameFolder(folderId, currentName) {
   // TODO: add rename folder functionality
 }
 
-function deleteFolder(folderId) {
-  // TODO: Delete folder functionality
+async function deleteFolder(folderId) {
+  if (window.FileManager && typeof window.FileManager.performDeleteFolder === 'function') {
+    await window.FileManager.performDeleteFolder(folderId);
+  } else {
+    console.error('Opps no work');
+  }
 }
 
 window.FileManager = FileManager;

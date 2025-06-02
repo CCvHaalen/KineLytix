@@ -125,7 +125,29 @@
       </div>
     </div>
   </div>
-   <!-- main JS logic -->  
+   <!-- main JS logic -->
+    <!-- modals logic   -->
+    <div id="saveToDbModal" class="modal">
+      <div class="modal-content">
+        <h3>Save Video to Database</h3>
+        <div class ="form-group">
+          <label for="dbFolderSelect">Select Folder:</label>
+          <select id="dbFolderSelect" class="modal-input"></select>
+        </div>
+        <div class="form-group">
+          <label for="dbVideoFileInput">Video File:</label>
+          <input type="file" id="dbVideoFileInput" accept="video/*"/>
+        </div>
+        <div class="form-group">
+          <label for="dbVideoTitleInput">Video Title:</label>
+          <input type="text" id="dbVideoTitleInput" placeholder="Enter Video Title" class="modal-input">
+        </div>
+        <div class="modal-actions">
+          <button id="cancelSaveToDbBtn" class="btn">Cancel</button>
+          <button id="confirmSaveToDbBtn" class="btn primary">Save</button>
+        </div>
+      </div>
+    </div>
     <div id="loginModal" class="modal">
         <div class="grid-container" id="modalContent">
           <div class="header-login">Login for Assessment</div>
@@ -140,7 +162,7 @@
                       <label for="condition">Condition/Configuration</label>
                       <input type="text" id="condition" placeholder="Enter Condition/Configuration" name="condition"/>
                   </div>
-                  <div class="form-group">
+                  <!-- <div class="form-group">
                       <label for="exercise">Exercise</label>
                       <select id="exercise" placeholder="Enter Exercise" name="exercise">
                           <option value="">Select Exercise</option>
@@ -151,7 +173,7 @@
                           <option value="knee lift">Knee lift</option>
                           <option value="cross shoulder reach">Cross shoulder reach</option>
                       </select>
-                  </div>
+                  </div> -->
                   <div class="form-group">
                       <label for="trial">Trial</label>
                       <input type="text" id="trial" placeholder="Enter Trial" name="trial"/>

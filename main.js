@@ -3,6 +3,8 @@ const path = require('path')
 const fs = require('fs')
 const { spawn } = require('child_process')
 const fetch = require('node-fetch');
+const FormData = require('form-data');
+const os = require('os');
 
 let djangoServerProcess;
 let mainWindow;
@@ -16,7 +18,6 @@ function getBackendPath() {
     }
 }
 
-// env: { ...process.env, PYTHONUNBUFFERED: '1' }
 
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 async function startDjangoServer() {
@@ -94,7 +95,7 @@ async function startDjangoServer() {
                 console.error('Dev server start timed out. Killing process.');
                 spawnedProcess.kill('SIGKILL');
                 reject(new Error('Dev server start timed out'));
-            }, 20000); // 20 seconds for dev server
+            }, 20000);
 
             spawnedProcess.stdout.on('data', (chunk) => {
                 const output = chunk.toString();
@@ -120,7 +121,6 @@ async function startDjangoServer() {
             spawnedProcess.on('close', (code) => {
                 clearTimeout(timeout);
                 console.log(`Dev Django server exited with code ${code}`);
-                // Only reject if it hasn't resolved yet (i.e., "Starting development server" was not seen)
                 if (!buffer.includes('Starting development server')) {
                     reject(new Error(`Dev server exited (${code}) before start`));
                 }
@@ -128,22 +128,18 @@ async function startDjangoServer() {
             return;
         }
 
-        // Production (Waitress) path
         console.log('Starting production server health check loop...');
         const start = Date.now();
         const maxWait = 30000;
 
         spawnedProcess.on('error', (err) => {
             console.error('Production Django spawn error:', err);
-            // The health check loop will eventually timeout and reject
         });
 
         spawnedProcess.on('close', (code) => {
             console.log(`Production Django server exited with code ${code}.`);
-            // The health check loop will eventually timeout and reject if server doesn't become healthy
         });
         
-        // Log any stdout/stderr from waitress immediately for debugging
         spawnedProcess.stdout.on('data', (chunk) => {
             console.log('Production Django stdout:', chunk.toString().trim());
         });
@@ -152,7 +148,7 @@ async function startDjangoServer() {
         });
 
         while (Date.now() - start < maxWait) {
-            await sleep(1000); // Check every second
+            await sleep(1000);
             if (await checkServerHealth()) {
                 console.log('Production server health check successful.');
                 return resolve();
@@ -208,7 +204,6 @@ function stopDjangoServer() {
 }
 
 const createWindow = async () => {
-    // create a new browser window
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 720,
@@ -216,10 +211,10 @@ const createWindow = async () => {
         minHeight: 600,
         backgroundColor: '#f5f7fa',
         webPreferences: {
-            nodeIntegration: true, // allow using node in renderer (not very secure but okay for small apps)
-            contextIsolation: false, // allows shared context (again, not super safe but convenient)
+            nodeIntegration: true, 
+            contextIsolation: false, 
         },
-        show: false, // don't show it immediately
+        show: false, 
     });
 
     try {
@@ -229,14 +224,10 @@ const createWindow = async () => {
     } catch (error) {
         console.error('Fatal: Failed to start Django server:', error);
         dialog.showErrorBox("Application Startup Error", `Failed to start the backend server: ${error.message}\nThe application might not function correctly.`);
-        // Depending on how critical the backend is, you might app.quit() here
-        // For now, we'll let the app load so the user can see the error.
     }
 
-    // load the main HTML file
     mainWindow.loadFile('index.html')
 
-    // only show window when it's ready to avoid flicker
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
     });
@@ -314,6 +305,75 @@ ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
     }
 });
 
+ipcMain.handle('delete-data', async (event, endpoint) => {
+  const backendBaseUrl = 'http://127.0.0.1:8000/';
+  const targetUrl = `${backendBaseUrl}${endpoint}`;
+
+  console.log(`Main Process: Received delete request for endpoint: ${endpoint}`);
+  console.log(`Main Process: Sending DELETE request to: ${targetUrl}`);
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) { 
+      console.log(`Main Process: Successfully deleted resource at ${targetUrl}. Status: ${response.status}`);
+      return { success: true };
+    } else {
+      let errorText = `Failed to delete. Status: ${response.status}`;
+      try {
+        const errorData = await response.json(); 
+        errorText = errorData.detail || errorData.message || JSON.stringify(errorData);
+      } catch (e) {
+        const text = await response.text();
+        if (text) errorText = text;
+      }
+      console.error(`Main Process: Failed to delete resource at ${targetUrl}. Error: ${errorText}`);
+      return { success: false, error: errorText };
+    }
+  } catch (error) {
+    console.error(`Main Process: Network or other error during DELETE request to ${targetUrl}:`, error);
+    return { success: false, error: error.message || 'Network error or server unreachable' };
+  }
+});
+
+// Handle video upload call to Django server
+
+ipcMain.handle('upload-video', async (event, payload) => {
+  const url = 'http://127.0.0.1:8000/api/videos/';
+  console.log(`Main: Received 'upload-video' IPC. Uploading video: '${payload.title}'`);
+  
+  try {
+    const formData = new FormData();
+    formData.append('title', payload.title);
+    formData.append('folder', payload.folder);
+    
+    const buffer = Buffer.from(payload.fileBuffer);
+    formData.append('file', buffer, {
+      filename: payload.fileName,
+      contentType: payload.fileType,
+      knownLength: buffer.length
+    });
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      timeout: 30000 
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    return { success: true, data };
+  } catch (err) {
+    console.error("Main: Video upload failed", err);
+    return { success: false, error: err.message };
+  }
+});
 
 async function checkServerHealth() {
     try {
@@ -343,14 +403,11 @@ app.on('will-quit', async (event) => {
     } catch (error) {
         console.error('Error stopping Django server:', error);
     } finally {
-        app.exit(); // Now actually quit the application
+        app.exit(); 
     }
 });
 
 app.on('window-all-closed', () => {
-    // On macOS it's common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    // The 'will-quit' event will handle server shutdown.
     if (process.platform !== 'darwin') {
         app.quit();
     }
