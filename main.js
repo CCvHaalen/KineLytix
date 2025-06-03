@@ -1,6 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
-const fs = require('fs')
 const { spawn } = require('child_process')
 const fetch = require('node-fetch');
 const FormData = require('form-data');
@@ -14,7 +13,7 @@ function getBackendPath() {
     if (isDev) {
         return path.join(__dirname, '..', 'TNO-Backend');
     } else {
-        return path.join(process.resourcesPath, 'TNO-Backend');
+        return path.join(process.resourcesPath, 'app', 'TNO-Backend');
     }
 }
 
@@ -23,39 +22,38 @@ const sleep = ms => new Promise(res => setTimeout(res, ms));
 async function startDjangoServer() {
     return new Promise(async (resolve, reject) => {
         const backendPath = getBackendPath();
-        const managePy = path.join(backendPath, 'manage.py');
-        const venvPy = process.platform === 'win32'
-            ? path.join(backendPath, 'venv', 'Scripts', 'python.exe')
-            : path.join(backendPath, 'venv', 'bin', 'python');
+        const managePyPath = path.join(backendPath, 'manage.py');
 
-        if (!fs.existsSync(managePy)) {
-            console.error(`manage.py not found at ${managePy}`);
-            return reject(new Error(`manage.py not found at ${managePy}`))
+        let pythonExecutable = 'python'; // Default to system python
+        const venvPythonPathWin = path.join(backendPath, 'venv', 'Scripts', 'python.exe');
+        const venvPythonPathNonWin = path.join(backendPath, 'venv', 'bin', 'python');
+
+        if (process.platform === 'win32') {
+            if (require('fs').existsSync(venvPythonPathWin)) {
+                pythonExecutable = venvPythonPathWin;
+            } else {
+                console.warn(`Virtual environment Python not found at ${venvPythonPathWin}. Falling back to system 'python'.`);
+            }
+        } else { // For macOS, Linux
+            if (require('fs').existsSync(venvPythonPathNonWin)) {
+                pythonExecutable = venvPythonPathNonWin;
+            } else {
+                console.warn(`Virtual environment Python not found at ${venvPythonPathNonWin}. Falling back to system 'python'.`);
+            }
         }
-        if (!fs.existsSync(venvPy)) {
-            console.error(`Python executable not found at ${venvPy}`);
-            return reject(new Error(`Python executable not found at ${venvPy}. Ensure TNO-Backend/venv is correctly packaged.`));
+        
+        console.log(`Backend path: ${backendPath}`);
+        console.log(`Using Python executable: ${pythonExecutable}`);
+        console.log(`Using manage.py: ${managePyPath}`);
+
+        if (!require('fs').existsSync(managePyPath)) {
+            const errorMsg = `manage.py not found at ${managePyPath}`;
+            console.error(errorMsg);
+            dialog.showErrorBox("Backend Error", `${errorMsg}\nPlease ensure the backend is correctly packaged.`);
+            return reject(new Error(errorMsg));
         }
 
-        const logDir = app.getPath('userData');
-        const logPath = path.join(logDir, 'backend.log');
-        fs.mkdirSync(logDir, { recursive: true });
-        fs.writeFileSync(logPath, `=== Starting backend at ${new Date().toISOString()} ===\n`);
-        console.log(`Backend log → ${logPath}`);    
-
-        const isDev = !app.isPackaged;
-        const args = isDev
-        ? [ managePy, 'runserver', '--noreload', '127.0.0.1:8000' ]
-        : [ '-m', 'waitress', '--port=8000', 'mysite.wsgi:application' ];
-
-        const env = {
-        ...process.env,
-        PYTHONUNBUFFERED: '1',
-        ...(isDev ? {} : { DJANGO_SETTINGS_MODULE: 'mysite.settings_prod' })
-        };
-
-        console.log(`Spawning: ${venvPy} with args: ${args.join(' ')} in ${backendPath}`);
-        const spawnedProcess = spawn(venvPy, args, {
+        djangoServerProcess = spawn(pythonExecutable, [managePyPath, 'runserver', '--noreload', '127.0.0.1:8000'], {
             cwd: backendPath,
             env: env,
             stdio: ['ignore', 'pipe', 'pipe']
@@ -239,70 +237,53 @@ const createWindow = async () => {
 
 ipcMain.handle('fetch-data', async (event, endpoint) => {
     const url = `http://127.0.0.1:8000/${endpoint}`;
-    console.log(`Main: Received 'fetch-data' IPC. Endpoint: '${endpoint}', Target URL: ${url}`);
+    console.log('Fetching data from:', url);
 
     const isDev = !app.isPackaged;
 
     if (!isDev && !djangoServerProcess && !(await checkServerHealth())) {
-        const errorMsg = 'Backend Server is not running or has been stopped.';
+
+        const errorMsg = 'Backend Sserver is not running or has been stopped.';
         console.error(`Main: ${errorMsg}`);
         return { success: false, error: errorMsg };
     }
 
     try {
-         console.log(`Main: Attempting GET to ${url}`);
-        const response = await fetch(url, {
-            method: 'GET', 
-            timeout: 10000
-        });
-
-        console.log(`Main: GET response status from ${url}: ${response.status}`); 
-
+        const response = await fetch(url, { timeout: 10000});
         if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Main: POST HTTP error! Status: ${response.status}, Body: ${errorText.substring(0, 500)}`); 
-        throw new Error(`HTTP ${response.status}: ${errorText.substring(0,200)}`);
+            const errorText = await response.text();
+            console.error(`Main: HTTP error! status: ${response.status}, message: ${errorText.substring(0,500)}`);
+            throw new Error(`HTTP error ${response.status}: ${errorText.substring(0, 200)}`);
         }
-
         const data = await response.json();
-        console.log(`Main: POST to ${url} successful. Response data:`, data); 
-        return { success: true, data };
-    } catch (err) {
-        console.error(`Main: POST to ${url} failed. Error:`, err); 
-        return { success: false, error: err.message };
+        return { success: true, data: data };
+    } catch (error) {
+        console.error(`Main: Error fetching data from: ${url}`, error);
+        return { success: false, error: error.message }; 
     }
 });
 
 ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
-    const url = `http://127.0.0.1:8000/${endpoint}`;
-    console.log(`Main: Received 'post-data' IPC. Endpoint: '${endpoint}', Payload:`, payload, `Target URL: ${url}`);
-    const isDev = !app.isPackaged;
-    if ((isDev && !djangoServerProcess) || (!isDev && !(await checkServerHealth()))) {
-        const errorMsg = 'Main: Backend Server is not running or not healthy (post-data).';
-        console.error(errorMsg);
-        return { success: false, error: errorMsg };
-    }
-    
-    try {
-        console.log(`Main: Attempting POST to ${url} with payload:`, JSON.stringify(payload));
-        const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        timeout: 10000
-        });
+  const url = `http://127.0.0.1:8000/${endpoint}`;
 
-        if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-        const data = await response.json();
-        return { success: true, data };
-    } catch (err) {
-        console.error("Main: POST failed", err);
-        return { success: false, error: err.message };
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (err) {
+    console.error("Main: POST failed", err);
+    return { success: false, error: err.message };
+  }
 });
 
 ipcMain.handle('delete-data', async (event, endpoint) => {
@@ -378,10 +359,8 @@ ipcMain.handle('upload-video', async (event, payload) => {
 async function checkServerHealth() {
     try {
         const response = await fetch('http://127.0.0.1:8000/', { method: 'HEAD', timeout: 1000 }); // A lightweight check
-        console.log(`Health check: Server responded to GET / with status ${response.status}`);
-        return true;
+        return response.ok;
     } catch (error) {
-        console.log('Health check failed:', error);
         return false;
     }
 }

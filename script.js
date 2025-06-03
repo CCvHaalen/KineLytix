@@ -3,30 +3,16 @@ const path = require('path');
 
 const elements = {
   sidebar: document.getElementById('sidebar'),
-  toggleSidebar: document.getElementById('toggle-sidebar'),
-  toggleVideoLibraryBtn: document.getElementById('toggleVideoLibrary'),
-  toggleFileManagerBtn: document.getElementById('toggleFileManager'),
-  videoLibraryView: document.getElementById('video-library-view'),
-  fileManagerView: document.getElementById('file-manager-view'),
   dropArea: document.getElementById('dropArea'),
   videoFileInput: document.getElementById('videoFile'),
   videoList: document.getElementById('videoList'),
-  folderList: document.getElementById('folderList'),
-  addProjectBox: document.getElementById('addProjectBox'),
-  videoContainer: document.getElementById('video-container'),
   video: document.getElementById('video'),
   canvas: document.getElementById('overlay'),
-  hoverDeleteBtn: document.getElementById('hoverDeleteBtn'),
-  frameBar: document.getElementById('frameBar'),
-  checkpointList: document.getElementById('checkpointList'),
+  videoContainer: document.getElementById('video-container'),
   activateBtn: document.getElementById('activateAnnotation'),
   clearBtn: document.getElementById('clearAnnotation'),
-  toggleBtn: document.getElementById('toggleAngleType'), // Previously elements.toggleBtn
-  saveFrameBtn: document.getElementById('saveFrame'),
-  saveAngleBtn: document.getElementById('saveAngle'),
-  deleteSelectedAngleBtn: document.getElementById('deleteSelectedAngle'),
   createCheckpointBtn: document.getElementById('createCheckpoint'),
-  btnDownloadCsv: document.getElementById('btnDownloadCsv'),
+  checkpointList: document.getElementById('checkpointList'),
   result: document.getElementById('result'),
   speedSelect: document.getElementById('speedSelect'),
   speedValue: document.getElementById('speedValue'),
@@ -83,6 +69,13 @@ const state = {
 };
 
 const data = [];
+
+const btnDownloadCsv = document.getElementById('btnDownloadCsv');
+
+btnDownloadCsv.addEventListener("click",()=>{
+  downloadCsv("results.csv", json2csv.parse(data));
+});
+
 /**
  * Creates a hidden download link for CSV data and programmatically clicks it to trigger a file download of the data
  * Data must already by in CSV format
@@ -115,6 +108,8 @@ function init() {
   setupLoginModal();
   setupSaveToDbModal();
   testFetchData();
+  elements.speedSelect = document.getElementById('speedSelect');
+  elements.speedValue  = document.getElementById('speedValue');
 
   elements.video.playbackRate = parseFloat(elements.speedSelect.value);
 
@@ -123,6 +118,12 @@ function init() {
     elements.video.playbackRate = speed;
     elements.speedValue.textContent = speed.toFixed(2) + 'x';
   });
+  
+//   elements.speedSlider.addEventListener('input', () => {
+//   const speed = parseFloat(elements.speedSlider.value);
+//   elements.video.playbackRate = speed;
+//   elements.speedValue.textContent = speed.toFixed(2) + 'x';
+// });
 
   elements.toggleBtn.style.display = 'inline-block';
   elements.toggleBtn.addEventListener('click', () => {
@@ -445,9 +446,11 @@ function setupEventListeners() {
 
   elements.saveAngleBtn.addEventListener('click', saveAngle);
 
+  window.addEventListener('resize', resizeCanvasToVideo);
+
   elements.video.addEventListener('timeupdate', checkAndRenderAngles);
 
-  elements.deleteSelectedAngleBtn.addEventListener('click', deleteSelectedAngle);
+  document.getElementById('deleteSelectedAngle').addEventListener('click', deleteSelectedAngle);
 
   elements.videoContainer.addEventListener('mousemove', handleCanvasMouseMove);
 
@@ -547,7 +550,6 @@ function updateVideoList() {
   
   state.videoFiles.forEach((file, index) => {
     const li = document.createElement('li');
-    li.classList.add('video-item');
     li.textContent = file.name;
     li.dataset.index = index;
     
@@ -589,63 +591,10 @@ function updateVideoList() {
 
 /**
  * Validates the index, updates the current video state, highlights the selected list item, loads and displays the
- * chosen video via a blob URL clears any existing annotations, and shows frame items only for
+ * chosen video via a blob URL, hides the placeholder, clears any existing annotations, and shows frame items only for
  * the selected video while hiding others.
  * @param {integer} index the position of the video in state.videoFiles to select
  */
-
-function deleteVideo(index) {
-  if (index < 0 || index >= state.videoFiles.length) return;
-
-  state.videoFiles.splice(index, 1);
-
-  if (index === state.currentVideoIndex) {
-    state.currentVideoIndex = -1;
-    elements.video.src = '';
-    elements.video.load();
-    elements.video.style.display = 'none';
-    clearAnnotations();
-  } else if (index < state.currentVideoIndex) {
-    state.currentVideoIndex--;
-  }
-
-  updateVideoList();
-}
-
-/**
- * Loads a video from the file manager (database) into the player.
- * @param {string} videoPath The relative path to the video file (e.g., /media/videos/file.mp4)
- * @param {string} videoTitle The title of the video.
- */
-window.loadVideoFromManager = function(videoPath, videoTitle) {
-  if (!videoPath ) {
-    console.error("Video path is required to load a video.");
-    elements.result.textContent = "Error: Video path is required.";
-    return;
-  }
-
-  let fullVideoUrl;
-  if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) {
-    fullVideoUrl = videoPath;
-  }
-
-  console.log(`Loading video from manager: ${videoTitle} (URL: ${fullVideoUrl})`);
-  state.currentVideoIndex = -1;
-  document.querySelectorAll('#videoList li').forEach(li => li.classList.remove('active'));
-  
-  document.querySelectorAll('.frame-item').forEach(item => {
-    if (item !== addTile) {
-      item.style.display = 'none';
-    }
-  });
-  updateCheckpointVisibility();
-  elements.video.src = fullVideoUrl;
-  elements.video.load();
-  elements.video.style.display = 'block';
-  
-  clearAnnotations();
-};
-
 function selectVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
 
@@ -1214,6 +1163,7 @@ function handleCanvasMouseMove(event) {
   } else {
     btn.style.display = 'none';
   }
+
 }
 /**
  * Creates a new checkpoint at the current video time
@@ -1326,18 +1276,5 @@ function updateCheckpointVisibility() {
     }
   });
 }
-
-// const modal = document.getElementById('loginModal');
-// const modalContent = document.getElementById('modalContent');
-
-// document.getElementById('openLogin').addEventListener('click', () => {
-//   modal.style.display = 'flex';
-// });
-
-// modal.addEventListener('click', (e) => {
-//   if (!modalContent.contains(e.target)) {
-//     modal.style.display = 'none';
-//   }
-// });
 
 init();

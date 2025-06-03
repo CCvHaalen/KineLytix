@@ -137,28 +137,7 @@ const FileManager = (() => {
     videos.forEach(video => {
       const videoLi = document.createElement('li');
       videoLi.classList.add('video-item');
-      const videoName = video.title || (video.file ? video.file.split('/').pop() : `Video ${video.id}`);
-      videoLi.textContent = videoName;
-      videoLi.dataset.videoId = video.id;
-      videoLi.dataset.videoTitle = videoName;
-      videoLi.dataset.videoPath = video.file
-
-      videoLi.addEventListener('click', () => {
-        const videoPath = videoLi.dataset.videoPath;
-        const title = videoLi.dataset.videoTitle;
-        console.log('[FileManager] Clicked video item. Path:', videoPath, 'Title:', title);
-        console.log('[FileManager] Checking window.loadVideoFromManager. Type:', typeof window.loadVideoFromManager);
-        if (typeof window.loadVideoFromManager !== 'function') {
-            console.log('[FileManager] window.loadVideoFromManager value:', window.loadVideoFromManager);
-        }
-        
-        if (videoPath && typeof window.loadVideoFromManager === 'function') {
-          window.loadVideoFromManager(videoPath, title);
-        } else {
-          console.error('Could not load video: Path missing or loadVideoFromManager not defined.', video);
-        }
-      });
-
+      videoLi.textContent = video.title || video.file || `Video ${video.id}`;
       videosUlElement.appendChild(videoLi);
     });
   }
