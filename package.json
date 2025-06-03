@@ -1,37 +1,20 @@
 {
-  "name": "tno-rom-project",
+  "name": "tno",
+  "productName": "tno",
+  "description": "My Electron application description",
+  "keywords": [],
+  "main": "./main.js",
   "version": "1.0.0",
-  "description": "ROM Project for TNO",
-  "main": "main.js",
+  "author": "peter",
   "scripts": {
-    "start": "electron-forge start",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
-  },
-  "author": "TNO Team",
-  "license": "ISC",
-  "devDependencies": {
-    "@electron-forge/cli": "^7.8.1",
-    "@electron-forge/maker-deb": "^7.8.1",
-    "@electron-forge/maker-rpm": "^7.8.1",
-    "@electron-forge/maker-squirrel": "^7.8.1",
-    "@electron-forge/maker-zip": "^7.8.1",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
-    "@electron-forge/plugin-fuses": "^7.8.1",
-    "@electron/fuses": "^1.8.0",
-    "electron": "^35.0.1"
+    "start": "electron ."
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1",
-    "node-fetch": "^2.7.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-scripts": "^5.0.1"
+    "electron-builder": "26.0.15",
+    "node-fetch": "2.7.0",
+    "react-dom": "19.1.0",
+    "react-scripts": "5.1.0-next.26"
   },
-<<<<<<< HEAD
   "devDependencies": {
     "electron": "^35.0.1"
   },
@@ -40,46 +23,4 @@
     "url": "https://gitlab.socsci.ru.nl/msdt-2025/group-6/tno.git"
   },
   "license": "ISC"
-=======
-  "build": {
-    "appId": "com.yourcompany.tnoapp",
-    "productName": "TNO Video Analyzer",
-    "files": [
-      "**/*",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/*.d.ts",
-      "!**/node_modules/.bin",
-      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
-      "!.editorconfig",
-      "!**/._*",
-      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
-      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
-      "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
-    ],
-    "extraResources": [
-      {
-        "from": "../TNO-Backend",
-        "to": "app/TNO-Backend",
-        "filter": [
-          "**/*",
-          "!**/__pycache__/**",
-          "!**/*.pyc",
-          "!**/.git/**",
-          "!db.sqlite3-journal"
-        ]
-      }
-    ],
-    "win": {
-      "target": "nsis"
-    },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
-    }
-  }
->>>>>>> 9f88a9a256b49bbe9f95bbc10e8944047d715325
 }
