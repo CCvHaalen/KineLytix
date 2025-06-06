@@ -1,3 +1,5 @@
+
+
 /* Reset box sizing and remove default spacing */
 * {
   box-sizing: border-box;
@@ -17,9 +19,36 @@ body {
 }
 
 /* Header styles */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.header-btn {
+  padding: 8px 14px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.header-btn:hover{
+  background-color: #2980b9;
+}
+
+.header-title {
+  margin: 0;
+  flex-shrink: 0;
+}
+
 h1 {
   font-size: 1.8rem;
-  margin-bottom: 20px;
   color: #2c3e50;
 }
 
@@ -569,6 +598,7 @@ h2 {
   min-width: 40px;
   text-align: center;
 }
+
   /* Button to delete a frame */
 .delete-btn {
   position: absolute;
@@ -632,19 +662,6 @@ h2 {
 .add-project-box:hover {
   background-color: #e6f2ff;
   border-color: #3498db;
-}
-
-.modal {
-  position: fixed;
-  z-index: 20;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .modal-content {
@@ -847,4 +864,126 @@ h2 {
 .checkpoint-list::-webkit-scrollbar-track {
   background-color: #f1f1f1;
   border-radius: 10px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal .grid-container{
+  display:grid;
+  grid-template-areas: 
+      'header header'
+      'main main';
+  grid-template-rows: auto 1fr;
+  min-height: 70vh;
+  max-width: 800px;
+  width: 100%;
+  height: auto;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal .header-login {
+  grid-area: header;
+  background: linear-gradient(to left, #002f86, gray);
+  color: white;
+  padding: 30px;
+  font-size: 40px;
+  font-weight: bold;
+  width: 100%;
+}
+
+.modal .main-login {
+  grid-area: main;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 30px 40px;
+  width: 100%;
+}   
+
+.modal .form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px 50px;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  max-width: 800px;
+}
+
+.modal .form-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.modal label{
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.modal input{
+  font-size: 12px;
+  padding: 6px;
+  max-width: 200px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.modal select{
+  font-size: 12px;
+  padding: 6px;
+  max-width: 200px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+} 
+
+.modal .submit-button {
+  grid-column: span 2;
+  justify-self: center;
+  margin-top: 30px;
+  padding: 2px 70px;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal .close-button {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.modal .close-button:hover,
+.modal .close-button:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
 }

@@ -28,6 +28,18 @@ const elements = {
   dbVideoTitleInput: document.getElementById('dbVideoTitleInput'),
   confirmSaveToDbBtn: document.getElementById('confirmSaveToDbBtn'),
   cancelSaveToDbBtn: document.getElementById('cancelSaveToDbBtn'),
+  toggleBtn: document.getElementById('toggleAngleType'), 
+  saveFrameBtn: document.getElementById('saveFrame'),     
+  saveAngleBtn: document.getElementById('saveAngle'),    
+  toggleVideoLibraryBtn: document.getElementById('toggleVideoLibrary'),  
+  toggleFileManagerBtn: document.getElementById('toggleFileManager'),    
+  videoLibraryView: document.getElementById('video-library-view'),      
+  fileManagerView: document.getElementById('file-manager-view'),        
+  addProjectBox: document.getElementById('addProjectBox'),         
+  hoverDeleteBtn: document.getElementById('hoverDeleteBtn'),         
+  folderList: document.getElementById('folderList'),
+  frameBar: document.getElementById('frameBar')     
+  
 };
 
 if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileManagerView) {
@@ -108,6 +120,11 @@ function init() {
   setupLoginModal();
   setupSaveToDbModal();
   testFetchData();
+
+  elements.toggleBtn = document.getElementById('toggleAngleType');
+  elements.toggleVideoLibraryBtn = document.getElementById('toggleVideoLibrary');
+  elements.toggleFileManagerBtn = document.getElementById('toggleFileManager');
+  
   elements.speedSelect = document.getElementById('speedSelect');
   elements.speedValue  = document.getElementById('speedValue');
 
@@ -118,13 +135,6 @@ function init() {
     elements.video.playbackRate = speed;
     elements.speedValue.textContent = speed.toFixed(2) + 'x';
   });
-  
-//   elements.speedSlider.addEventListener('input', () => {
-//   const speed = parseFloat(elements.speedSlider.value);
-//   elements.video.playbackRate = speed;
-//   elements.speedValue.textContent = speed.toFixed(2) + 'x';
-// });
-
   elements.toggleBtn.style.display = 'inline-block';
   elements.toggleBtn.addEventListener('click', () => {
     state.showInnerAngle = !state.showInnerAngle;
@@ -456,8 +466,6 @@ function setupEventListeners() {
 
   elements.createCheckpointBtn.addEventListener('click', createCheckpoint);
 
-  elements.btnDownloadCsv.addEventListener('click', downloadCsv);
-
   window.addEventListener('resize', resizeCanvasToVideo);
 }
 
@@ -550,6 +558,7 @@ function updateVideoList() {
   
   state.videoFiles.forEach((file, index) => {
     const li = document.createElement('li');
+    li.classList.add('video-item');
     li.textContent = file.name;
     li.dataset.index = index;
     
@@ -587,6 +596,22 @@ function updateVideoList() {
     
     elements.videoList.appendChild(li);
   });
+}
+
+function deleteVideo(index) {
+  if (index < 0 || index >= state.videoFiles.length) return;
+
+  state.videoFiles.splice(index, 1);
+  if (index === state.currentVideoIndex) {
+    state.currentVideoIndex = -1;
+    elements.video.src = '';
+    elements.video.load();
+    elements.video.style.display = 'none';
+    clearAnnotations();
+  } else if (index < state.currentVideoIndex) {
+    state.currentVideoIndex--;
+  }
+  updateVideoList();
 }
 
 /**
@@ -1276,5 +1301,30 @@ function updateCheckpointVisibility() {
     }
   });
 }
+
+window.loadVideoFromManager = function(videoPath, videoTitle) {
+  if (!videoPath) {
+    console.error("Video path is required to load a video.");
+    elements.result.textContent = "No video path provided.";
+    return;
+  }
+  let fullVideoUrl;
+  if (videoPath.startsWith('http://' || videoPath.startsWith)) {
+    fullVideoUrl = videoPath;
+  }
+
+  console.log(`Loading video from manager: ${videoTitle} (URL: ${fullVideoUrl})`);
+  state.currentVideoIndex = -1;
+  document.querySelectorAll('#videoList li').forEach(item => {
+    if (item !== addTile) {
+      item.style.display = 'none';
+    }
+  });
+  updateCheckpointVisibility();
+  elements.video.src = fullVideoUrl;
+  elements.video.load();
+  elements.video.style.display = 'block';
+  clearAnnotations();
+};
 
 init();
