@@ -55,6 +55,8 @@ if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileMa
   console.warn("FileManager or its required DOM elements (folderList, fileManagerView) not found/initialized. File management may be affected.");
 }
 
+
+
 let ctx;
 if (elements.canvas) {
   try {
@@ -104,6 +106,15 @@ function downloadCsv(filename, csvData) {
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
+}
+
+function hideAngleTool() {
+  const overlay = document.getElementById("overlay");
+  if (overlay.style.display === "none") {
+    overlay.style.display = "block";  // Show angle lines
+  } else {
+    overlay.style.display = "none";   // Hide angle lines
+  }
 }
 
 /**
@@ -1009,6 +1020,15 @@ function saveFrame() {
     elements.video.currentTime = time;
   });
   item.appendChild(button);
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = '×';
+  deleteBtn.className = 'frame-delete-button';
+  deleteBtn.title = 'Delete this frame';
+  deleteBtn.addEventListener('click', () => {
+    item.remove(); 
+  });
+  item.appendChild(deleteBtn);
 
   elements.frameBar.insertBefore(item, elements.frameBar.lastElementChild);
   
