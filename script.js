@@ -55,8 +55,6 @@ if (typeof FileManager !== 'undefined' && elements.folderList && elements.fileMa
   console.warn("FileManager or its required DOM elements (folderList, fileManagerView) not found/initialized. File management may be affected.");
 }
 
-
-
 let ctx;
 if (elements.canvas) {
   try {
@@ -80,6 +78,9 @@ const state = {
   hoveredAngle: null,
   showInnerAngle: true,
   currentDbVideoTitle: null,
+  draggingPoint: null,
+  draggingAngleId: null,
+  wasDragging: false,
 };
 
 const data = [];
@@ -151,18 +152,23 @@ function init() {
     state.showInnerAngle = !state.showInnerAngle;
     elements.toggleBtn.textContent = state.showInnerAngle ? 'Show Outer Angle' : 'Show Inner Angle';
     if (state.points.length === 3) {
-    renderAngleDisplay();
-    return;
+      renderAngleDisplay();
+      drawPointsAndLines();
+      return;
     }
 
     const now = elements.video.currentTime;
     const saved = state.angles.find(a => Math.abs(a.time - now) < 0.2);
-    if (saved) {
-      const { inner, outer } = calculateAngle(...saved.points);
-      const displayed = state.showInnerAngle ? inner : outer;
-      const label = state.showInnerAngle ? 'Inner' : 'Outer';
-      elements.result.textContent = `${label} angle: ${displayed.toFixed(1)}° at ${saved.time.toFixed(2)}s`;
-    }
+    if (saved && Array.isArray(saved.points) && saved.points.length === 3) {
+    const p1 = saved.points[0];
+    const p2 = saved.points[1];
+    const p3 = saved.points[2];
+    const { inner, outer } = calculateAngle(p1, p2, p3);
+    const displayed = state.showInnerAngle ? inner : outer;
+    const label = state.showInnerAngle ? 'Inner' : 'Outer';
+    elements.result.textContent = `${label} angle: ${displayed.toFixed(1)}° at ${saved.time.toFixed(2)}s`;
+}
+
   });
 }
 
@@ -478,6 +484,12 @@ function setupEventListeners() {
   elements.createCheckpointBtn.addEventListener('click', createCheckpoint);
 
   window.addEventListener('resize', resizeCanvasToVideo);
+
+  elements.canvas.addEventListener('mousedown', handleCanvasMouseDown);
+
+  elements.canvas.addEventListener('mousemove', handleCanvasDragMove);
+
+  elements.canvas.addEventListener('mouseup', handleCanvasMouseUp);
 }
 
 /**
@@ -766,6 +778,8 @@ function clearAnnotations() {
  * @param {event} event the mouse click even on the canvas
  */
 function handleCanvasClick(event) {
+  if (state.wasDragging) return;
+
   if (state.annotationActive) {
     const rect = elements.canvas.getBoundingClientRect();
     const x = (event.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
@@ -778,12 +792,14 @@ function handleCanvasClick(event) {
     }
 
     drawPointsAndLines();
+
   } else if (state.hoveredAngle) {
     state.selectedAngle = state.hoveredAngle;
     elements.result.textContent = "Angle selected. Click 'Delete Selected Angle' to remove.";
     document.getElementById('deleteSelectedAngle').style.display = 'inline-block';
     checkAndRenderAngles();
   } else {
+    selectAngleAtPosition();
     state.selectedAngle = null;
     elements.result.textContent = '';
     document.getElementById('deleteSelectedAngle').style.display = 'none';
@@ -792,31 +808,62 @@ function handleCanvasClick(event) {
 }
 
 /**
+ * Draws a triangular arrowhead at the end of a line segment, pointing from one point to another. The arrowhead is centered at 
+ * the 'to' point and oriented in the direction of the vector from 'from' to 'to'. The arrowhead shape is calculated by 
+ * offsetting from the 'to' point at 30 degrees from the line angle.
+ * @param {object} from - The starting point with { x, y } coordinates
+ * @param {object} to - The endpoint of the line segment where the arrowhead will be drawn, with { x, y } coordinates
+ * @param {number} radius - The length of the sides of the triangular arrowhead
+ */
+function drawArrowhead(from, to, radius) {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+
+  const x1 = to.x - radius * Math.cos(angle - Math.PI / 6);
+  const y1 = to.y - radius * Math.sin(angle - Math.PI / 6);
+  const x2 = to.x - radius * Math.cos(angle + Math.PI / 6);
+  const y2 = to.y - radius * Math.sin(angle + Math.PI / 6);
+
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.closePath();
+  ctx.fillStyle = 'blue';
+  ctx.fill();
+}
+
+/**
  * Clears the canvas and then draws red circles for the first point and blue lines connecting the first to second
- * points, and second to third points if those points exist, visually helping the user place and see the angle points.
+ * points, and second to third points if those points exist, adds an arrowhead at the end of the p2->p3 line. Once all three points 
+ * have been selected, calculates and draws either the inner or outer angle arc based on the current setting (state.showInerAngle).
  */
 function drawPointsAndLines() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
+  const [p1, p2, p3] = state.points;
   if (state.points.length >= 1) {
     ctx.beginPath();
-    ctx.arc(state.points[0].x, state.points[0].y, 5, 0, Math.PI * 2);
+    ctx.arc(p1.x, p1.y, 5, 0, Math.PI * 2);
     ctx.fillStyle = 'red';
     ctx.fill();
   }
   if (state.points.length >= 2) {
     ctx.beginPath();
-    ctx.moveTo(state.points[0].x, state.points[0].y);
-    ctx.lineTo(state.points[1].x, state.points[1].y);
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
     ctx.stroke();
   }
   if (state.points.length === 3) {
     ctx.beginPath();
-    ctx.moveTo(state.points[1].x, state.points[1].y);
-    ctx.lineTo(state.points[2].x, state.points[2].y);
+    ctx.moveTo(p2.x, p2.y);
+    ctx.lineTo(p3.x, p3.y);
     ctx.stroke();
+    drawArrowhead(p2, p3, 12);
+    const { inner, outer } = calculateAngle(state.points[0], state.points[1], state.points[2]);
+    const displayed = state.showInnerAngle ? inner : outer;
+    drawAngleArc(state.points, displayed, state.showInnerAngle);
   }
 }
 
@@ -824,11 +871,12 @@ function drawPointsAndLines() {
  * Clears the canvas, converts relative point coordinates to absolute positions, draws each point and connecting lines,
  * and if three points are present, calculates and draws the measured angle arc.
  */
+/*
 function drawAnnotations() {
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
   
   if (state.points.length === 0) return;
-  
+
   const absPoints = state.points.map(p => ({
     x: p.xRel * elements.canvas.width,
     y: p.yRel * elements.canvas.height
@@ -849,6 +897,7 @@ function drawAnnotations() {
     drawAngleArc(absPoints, angleDeg);
   }
 }
+*/
 
 /**
  * Draws a labeled point on the canvas using concentric circles with different styles and places a number at its
@@ -857,6 +906,7 @@ function drawAnnotations() {
  * @param {number} y Y-coordinate of the point on the canvas
  * @param {number} number Label number to display inside the point
  */
+/*
 function drawPoint(x, y, number) {
   ctx.fillStyle = 'rgba(52, 152, 219, 0.6)';
   ctx.beginPath();
@@ -874,12 +924,14 @@ function drawPoint(x, y, number) {
   ctx.textBaseline = 'middle';
   ctx.fillText(number.toString(), x, y);
 }
+*/
 
 /**
  * Draws a blue line with a width of 2 pixels connecting two given points on the canvas
  * @param {object} p1 First point with { x, y } coordinates
  * @param {object} p2 Second point with { x, y } coordinates
  */
+/*
 function drawLine(p1, p2) {
   ctx.strokeStyle = '#3498db';
   ctx.lineWidth = 2;
@@ -888,6 +940,7 @@ function drawLine(p1, p2) {
   ctx.lineTo(p2.x, p2.y);
   ctx.stroke();
 }
+*/
 
 /**
  * Calculates the direction of the angle at the middle point (p2) between three points and draws a red arc
@@ -895,7 +948,7 @@ function drawLine(p1, p2) {
  * @param {array} points Array of three point objects { x, y }, defining the angle
  * @param {number} angleDeg The calculated angle in degrees to display
  */
-function drawAngleArc(points, angleDeg) {
+function drawAngleArc(points, angleDeg, useInner = true) {
   const arcRadius = 40;
   const p1 = points[0];
   const p2 = points[1];
@@ -907,7 +960,7 @@ function drawAngleArc(points, angleDeg) {
   const cross = (p1.x - p2.x) * (p3.y - p2.y) - (p1.y - p2.y) * (p3.x - p2.x);
   
   let startAngle, endAngle;
-  
+
   if (cross > 0) {
     startAngle = angleToP1;
     endAngle = angleToP3;
@@ -927,12 +980,15 @@ function drawAngleArc(points, angleDeg) {
   ctx.strokeStyle = '#e74c3c';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(p2.x, p2.y, arcRadius, startAngle, endAngle);
+  ctx.arc(p2.x, p2.y, arcRadius, startAngle, endAngle, !useInner);
   ctx.stroke();
   
-  const midAngle = (startAngle + endAngle) / 2;
-  const labelX = p2.x + (arcRadius + 15) * Math.cos(midAngle);
-  const labelY = p2.y + (arcRadius + 15) * Math.sin(midAngle);
+  const midAngle = !useInner
+    ? (startAngle + endAngle) / 2 + Math.PI
+    : (startAngle + endAngle) / 2;
+
+  const labelX = p2.x + (arcRadius + 20) * Math.cos(midAngle);
+  const labelY = p2.y + (arcRadius + 20) * Math.sin(midAngle);
   
   ctx.fillStyle = '#e74c3c';
   ctx.font = 'bold 14px Arial';
@@ -1058,11 +1114,12 @@ function saveAngle() {
   }
 
   const time = elements.video.currentTime;
+  const copiedPoints = state.points.map(p => ({ x: p.x, y: p.y }));
 
   state.angles.push({
     id: Date.now() + Math.random(),
     time,
-    points: [...state.points],
+    points: copiedPoints,
     angle: displayed
   });
 
@@ -1346,5 +1403,56 @@ window.loadVideoFromManager = function(videoPath, videoTitle) {
   elements.video.style.display = 'block';
   clearAnnotations();
 };
+
+/**
+ * Handles mouse down event on the canvas. 
+ * If annotation mode is active and the click is near a point, prepares that point for dragging.
+ * @param {MouseEvent} e - The mouse event
+ */
+function handleCanvasMouseDown(e) {
+  const rect = elements.canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
+  const y = (e.clientY - rect.top) * (elements.canvas.height / elements.canvas.clientHeight);
+
+  if (state.annotationActive) {
+    for (let i = 0; i < state.points.length; i++) {
+      const dx = x - state.points[i].x;
+      const dy = y - state.points[i].y;
+      if (Math.hypot(dx, dy) < 10) {
+        state.draggingPoint = i;
+        return;
+      }
+    }
+  }
+}
+
+/**
+ * Handles mouse move event on the canvas while dragging. Updates the position of the dragged point and redraws the canvas.
+ * @param {MouseEvent} e - The mouse event
+ */
+function handleCanvasDragMove(e) {
+  if (state.draggingPoint === null) return;
+
+  state.wasDragging = true;
+
+  const rect = elements.canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (elements.canvas.width / elements.canvas.clientWidth);
+  const y = (e.clientY - rect.top) * (elements.canvas.height / elements.canvas.clientHeight);
+
+  state.points[state.draggingPoint] = { x, y };
+
+  ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+  drawPointsAndLines();
+
+}
+
+/**
+ * Handles mouse up event to stop dragging a point.
+ */
+function handleCanvasMouseUp() {
+  state.draggingPoint = null;
+  state.draggingAngleId = null;
+  setTimeout(() => state.wasDragging = false, 0);
+}
 
 init();
