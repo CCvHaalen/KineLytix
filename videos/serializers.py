@@ -9,7 +9,7 @@ class FolderSerializer(serializers.ModelSerializer):
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'title', 'file', 'folder', 'uploaded_at']
+        fields = ['id', 'title', 'file', 'folder', 'uploaded_at', 'participant_data']
         read_only_fields = ['uploaded_at']
         
 class FolderWithVideosSerializer(serializers.ModelSerializer):

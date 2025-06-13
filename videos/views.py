@@ -25,8 +25,8 @@ class FolderViewSet(viewsets.ModelViewSet):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
-    permission_classes = [permissions.AllowAny] #Adjust permissions if needed
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         queryset = Video.objects.all()
