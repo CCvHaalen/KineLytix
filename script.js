@@ -262,9 +262,9 @@ function promptAndSaveVideoToDb(videoIndex) {
     return;
   }
   
-  const videoFile = state.videoFiles[videoIndex];
+  const videoEntry = state.videoFiles[videoIndex];
   
-  document.getElementById('dbVideoTitleInput').value = videoFile.name.replace(/\.[^/.]+$/, ""); // Set default title (filename without extension)
+  document.getElementById('dbVideoTitleInput').value = videoEntry.name.replace(/\.[^/.]+$/, "");
   document.getElementById('dbVideoFileInput').value = "";
   
   populateFolderDropdown();
@@ -564,7 +564,19 @@ function handleFileImport() {
  * @param {array} files array of video file objects
  */
 function importVideos(files) {
-  state.videoFiles = [...state.videoFiles, ...files];
+  const newEntries = files.map(file => ({
+    fileObject: file,
+    name: file.name,
+    jsonResults: {
+      date: "",
+      participantId: "",
+      task: "",
+      configuration: "",
+      trial: "",
+      measurements: []
+    }
+  }));
+  state.videoFiles.push(...newEntries);
   updateVideoList();
   
   if (state.currentVideoIndex === -1 && state.videoFiles.length > 0) {
@@ -579,10 +591,10 @@ function importVideos(files) {
 function updateVideoList() {
   elements.videoList.innerHTML = '';
   
-  state.videoFiles.forEach((file, index) => {
+  state.videoFiles.forEach((videoEntry, index) => {
     const li = document.createElement('li');
     li.classList.add('video-item');
-    li.textContent = file.name;
+    li.textContent = videoEntry.name;
     li.dataset.index = index;
     
     if (index === state.currentVideoIndex) {
@@ -647,6 +659,7 @@ function selectVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
 
   state.currentVideoIndex = index;
+  const videoEntry = state.videoFiles[index];
 
   document.querySelectorAll('#videoList li').forEach((li, i) => {
     if (i === index) {
@@ -656,8 +669,7 @@ function selectVideo(index) {
     }
   });
 
-  const file = state.videoFiles[index];
-  const url = URL.createObjectURL(file);
+  const url = URL.createObjectURL(videoEntry.fileObject);
   elements.video.src = url;
   elements.video.load();
   elements.video.style.display = 'block';
@@ -1088,10 +1100,14 @@ function saveFrame() {
 
   elements.frameBar.insertBefore(item, elements.frameBar.lastElementChild);
   
-  // Scroll to show the new checkpoint
   item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   
   clearAnnotations();
+
+  if (state.currentVideoIndex !== -1 && state.videoFiles[state.currentVideoIndex]) {
+    const currentVideoEntry = state.videoFiles[state.currentVideoIndex];
+    console.log(`jsonResults for ${currentVideoEntry.name} after saving frame:`, currentVideoEntry.jsonResults);
+  }
 }
 
 /**
@@ -1101,6 +1117,11 @@ function saveFrame() {
 function saveAngle() {
   if (state.points.length !== 3) {
     elements.result.textContent = "Please mark exactly 3 points before saving!";
+    return;
+  }
+  const currentVideoEntry = state.videoFiles[state.currentVideoIndex];
+  if (!currentVideoEntry) {
+    elements.result.textContent = "Error: No video data found for saving angle.";
     return;
   }
 
@@ -1125,6 +1146,20 @@ function saveAngle() {
 
   elements.result.textContent =
     `Saved angle: ${displayed.toFixed(2)}° at ${time.toFixed(2)}s`;
+
+  const frameNumber = currentVideoEntry.jsonResults.measurements.length + 1;
+  const cp = state.checkpoints.find(c => c.videoIndex === state.currentVideoIndex && Math.abs(c.time - time) < 0.2);
+  const frameCheckpoint = cp
+    ? `${Math.floor(cp.time/60)}:${String(Math.floor(cp.time%60)).padStart(2,'0')}`
+    : "";
+
+  currentVideoEntry.jsonResults.measurements.push({
+    frameNumber,
+    frameAngleMeasurement: displayed,
+    frameCheckpoint
+  });
+
+  console.log(`jsonResults for ${currentVideoEntry.name} after saving angle:`, currentVideoEntry.jsonResults);
 
   state.points = [];
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
@@ -1456,3 +1491,40 @@ function handleCanvasMouseUp() {
 }
 
 init();
+
+const loginForm = document.getElementById('loginForm');
+loginForm.addEventListener('submit', e => {
+  e.preventDefault();
+  if (state.currentVideoIndex === -1) {
+    alert("Please select a video before submitting participant data.");
+    elements.loginModal.style.display = 'none';
+    return;
+  }
+  const currentVideoEntry = state.videoFiles[state.currentVideoIndex];
+  if (!currentVideoEntry) {
+    alert("No video selected. Please select a video first.");
+    elements.loginModal.style.display = 'none';
+    return;
+  }
+
+    const dateInput = document.getElementById('date');
+  const participantIdInput = document.getElementById('participant-id');
+  const taskInput = document.getElementById('task'); 
+  const configurationInput = document.getElementById('configuration'); 
+  const trialInput = document.getElementById('trial');
+
+  currentVideoEntry.jsonResults.date = document.getElementById('date').value.replace(/-/g,'');
+  currentVideoEntry.jsonResults.participantId = document.getElementById('participant-id').value.trim();
+  currentVideoEntry.jsonResults.task = document.getElementById('task').value.trim();
+  currentVideoEntry.jsonResults.configuration = document.getElementById('configuration').value.trim();
+  currentVideoEntry.jsonResults.trial = document.getElementById('trial').value.trim();
+  elements.loginModal.style.display = 'none';
+  console.log(`jsonResults for ${currentVideoEntry.name} after login:`, currentVideoEntry.jsonResults);
+  dateInput.value = '';
+  participantIdInput.value = '';
+  taskInput.value = '';
+  configurationInput.value = '';
+  trialInput.value = '';
+});
+
+

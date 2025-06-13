@@ -426,7 +426,7 @@ h2 {
   pointer-events: none;
   display: none;
   z-index: 2;
-  background-color: #FF0000;  /*For debugging*/ 
+  /* background-color: #FF0000;  For debugging  */
 }
 
 /* Enable pointer events when overlay is active */
@@ -584,6 +584,22 @@ h2 {
 
 .frame-jump-button:hover {
   background-color: #2980b9;
+}
+
+.frame-delete-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 16px;
+  padding: 0;
 }
 
 /* Playback speed control */
