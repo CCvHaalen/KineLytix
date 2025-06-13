@@ -410,8 +410,7 @@ h2 {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 100%; /*60 vh*/
-  display: none; /*block*/
+  max-height: 100%;
   border-radius: 4px;
   object-fit: contain;
 }
@@ -419,16 +418,20 @@ h2 {
 /* Overlay on top of video */
 #overlay {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   display: none;
   z-index: 2;
-  /* background-color: #FF0000;  For debugging*/ 
+  background-color: #FF0000;  /*For debugging*/ 
 }
 
 /* Enable pointer events when overlay is active */
 #overlay.active {
+  display: block;
   pointer-events: auto;
 }
 
@@ -581,22 +584,6 @@ h2 {
 
 .frame-jump-button:hover {
   background-color: #2980b9;
-}
-
-.frame-delete-button {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-  cursor: pointer;
-  line-height: 16px;
-  padding: 0;
 }
 
 /* Playback speed control */

@@ -679,10 +679,10 @@ function selectVideo(index) {
  * its layout accordingly
  */
 function handleVideoLoaded() {
-  elements.canvas.width = this.videoWidth;
-  elements.canvas.height = this.videoHeight;
-  elements.canvas.style.display = 'block';
-  resizeCanvasToVideo();
+  elements.canvas.width = elements.video.videoWidth;
+  elements.canvas.height = elements.video.videoHeight;
+  elements.canvas.style.width = elements.video.clientWidth + "px";
+  elements.canvas.style.height = elements.video.clientHeight + "px";
 }
 
 /**
