@@ -359,6 +359,13 @@ ipcMain.handle('upload-video', async (event, payload) => {
     const formData = new FormData();
     formData.append('title', payload.title);
     formData.append('folder', payload.folder);
+
+    if (payload.participantData) {
+      console.log("Main: Attaching participant_data:", payload.participantData); 
+      formData.append('participant_data', payload.participantData);
+    } else {
+      console.log("Main: No participant_data found in payload or it's empty.");
+    }
     
     const buffer = Buffer.from(payload.fileBuffer);
     formData.append('file', buffer, {

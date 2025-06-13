@@ -328,47 +328,71 @@ async function populateFolderDropdown() {
  */
 function handleVideoUpload() {
   const folderSelect = document.getElementById('dbFolderSelect');
-  const fileInput = document.getElementById('dbVideoFileInput');
   const titleInput = document.getElementById('dbVideoTitleInput');
+  const modalFileInput = document.getElementById('dbVideoFileInput');
 
   if (!folderSelect.value) {
     alert('Please select a folder');
     return;
   }
-
-  if (!fileInput.files || fileInput.files.length === 0) {
-    alert('Please select a video file');
-    return;
-  }
-
-  if (!titleInput.value.trim()) {
+  const finalTitle = titleInput.value.trim();
+  if (!finalTitle) {
     alert('Please enter a title for the video');
     return;
   }
 
-  const videoFile = fileInput.files[0];
-  const formData = new FormData();
-  
-  formData.append('title', titleInput.value.trim());
-  formData.append('folder', folderSelect.value);
-  formData.append('file', videoFile);
+  let videoFileToUpload;
+  let videoFileName;
+  let videoFileType;
+  let associatedJsonResults = null;
+
+    if (state.currentDbVideoIndex !== -1 && state.videoFiles[state.currentDbVideoIndex]) {
+      const currentVideoEntry = state.videoFiles[state.currentDbVideoIndex];
+      videoFileToUpload = currentVideoEntry.fileObject;
+      videoFileName = currentVideoEntry.name;          
+      videoFileType = currentVideoEntry.fileObject.type;
+      associatedJsonResults = currentVideoEntry.jsonResults;
+
+      if (modalFileInput.files && modalFileInput.files.length > 0) {
+        console.warn("A file is selected in the modal's file input, but the video from the library (triggered by 'Save to DB') will be used. The modal's file selection is being ignored for the video content.");
+        modalFileInput.value = ""; // Clear it to prevent confusion
+      }
+    } else {
+      alert('No video from library selected for upload');
+      return;
+    }
+
+    if (!videoFileToUpload) {
+      alert('Critical Error: No video file could be determined for upload');
+      return;
+    }
+  const formDataForIPC = {
+    title: finalTitle,
+    folder: folderSelect.value,
+    participant_data: associatedJsonResults ? JSON.stringify(associatedJsonResults) : JSON.stringify(null)
+  };
 
   const saveBtn = document.getElementById('confirmSaveToDbBtn');
   const originalText = saveBtn.textContent;
   saveBtn.textContent = 'Uploading...';
   saveBtn.disabled = true;
 
-  uploadVideoToServer(formData)
+  uploadVideoToServer(
+    formDataForIPC.title,
+    formDataForIPC.folder,
+    videoFileToUpload, 
+    formDataForIPC.participant_data
+  )
     .then(result => {
       if (result.success) {
         alert('Video uploaded successfully!');
         document.getElementById('saveToDbModal').style.display = 'none';
-        
         if (typeof FileManager !== 'undefined' && FileManager.refreshNow) {
           FileManager.refreshNow();
         }
       } else {
         alert(`Upload failed: ${result.error}`);
+        console.error('Video upload failed:', result.error);
       }
     })
     .catch(error => {
@@ -386,30 +410,34 @@ function handleVideoUpload() {
  * @param {FormData} formData The form data containing title, folder, and file
  * @returns {Promise<Object>} Promise that resolves to success/error response
  */
-async function uploadVideoToServer(formData) {
-  const file = formData.get('file');
+async function uploadVideoToServer(title, folderId, fileObject, participantDataString) {
+  // const file = formData.get('file');
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
     reader.onload = async function() {
       try {
         const payload = {
-          title: formData.get('title'),
-          folder: formData.get('folder'),
-          fileBuffer: reader.result,
-          fileName: file.name,
-          fileType: file.type
+          title: title,
+          folder: folderId,
+          fileName: fileObject.name, 
+          fileType: fileObject.type,
+          fileBuffer: Array.from(new Uint8Array(this.result)),
+          participantData: participantDataString
         };
-                const response = await ipcRenderer.invoke('upload-video', payload);
+        const response = await ipcRenderer.invoke('upload-video', payload);
         resolve(response);
       } catch (error) {
         reject(error);
       }
     };
     
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = (err) => {
+        console.error("FileReader error:", err);
+        reject(new Error('Failed to read file for upload.'));
+    }
     
-    reader.readAsArrayBuffer(file);
+    reader.readAsArrayBuffer(fileObject);
   });
 }
 

@@ -97,10 +97,11 @@ const FileManager = (() => {
           e.stopPropagation();
           const action = item.dataset.action;
           const folderId = folder.id;
-          const folderName = folder.name;
+          const currentFolderName = folder.name;
 
           if (action === 'export') {
-            exportFolderToCSV(folderId);
+            console.log(`Export action for folderId: ${folderId}, name: ${currentFolderName}`);
+            FileManager.exportFolderToCSV(folderId, currentFolderName);
           } else if (action === 'rename') {
             promptRenameFolder(folderId, folderName);
           } else if (action === 'remove') {
@@ -200,6 +201,79 @@ const FileManager = (() => {
       }
     }
 
+    async function _exportFolderToCSVInternal(folderId, folderName) {
+      if (!_ipcRenderer) {
+        console.error("FileManager: IPC Renderer not available for CSV export.");
+        alert("Error: Could not initiate CSV export. IPC unavailable.");
+        return;
+      }
+
+      try {
+        console.log(`Exporting folder ID: ${folderId}, Name: ${folderName}`);
+        _elements.folderList.querySelector(`li[data-folder-id="${folderId}"]`).classList.add('exporting'); // Visual feedback
+
+        const result = await _ipcRenderer.invoke('fetch-data', `api/videos/?folder=${folderId}`);
+        
+        if (!result.success || !result.data) {
+          console.error('Failed to fetch videos for folder:', result.error);
+          alert(`Error fetching videos for folder ${folderName}: ${result.error || 'Unknown error'}`);
+          return;
+        }
+
+        const videos = result.data;
+        const csvDataRows = [];
+        const fields = ['date', 'participantId', 'task', 'configuration', 'trial', 'frameNumber', 'frameAngleMeasurement'];
+
+        videos.forEach(video => {
+          if (video.participant_data && Array.isArray(video.participant_data.measurements)) {
+            const pData = video.participant_data;
+            pData.measurements.forEach(measurement => {
+              csvDataRows.push({
+                date: pData.date || '',
+                participantId: pData.participantId || '',
+                task: pData.task || '',
+                configuration: pData.configuration || '',
+                trial: pData.trial || '',
+                frameNumber: measurement.frameNumber,
+                frameAngleMeasurement: typeof measurement.frameAngleMeasurement === 'number' 
+                                        ? measurement.frameAngleMeasurement.toFixed(2) 
+                                        : ''
+              });
+            });
+          }
+        });
+
+        if (csvDataRows.length === 0) {
+          alert(`No measurement data found in folder "${folderName}" to export.`);
+          return;
+        }
+
+        if (typeof json2csv === 'undefined' || typeof json2csv.parse !== 'function') {
+            alert('Error: CSV parsing library (json2csv) is not available.');
+            console.error('json2csv is not loaded or not a function.');
+            return;
+        }
+        if (typeof downloadCsv !== 'function') { 
+            alert('Error: CSV download function is not available.');
+            console.error('downloadCsv function is not found.');
+            return;
+        }
+
+        const csvString = json2csv.parse(csvDataRows, { fields });
+        const filename = `Export_${folderName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+        
+        downloadCsv(filename, csvString);
+
+      } catch (error) {
+        console.error('Error during CSV export:', error);
+        alert(`An error occurred during CSV export for folder ${folderName}: ${error.message}`);
+      } finally {
+          if (_elements.folderList) {
+              const folderItem = _elements.folderList.querySelector(`li[data-folder-id="${folderId}"]`);
+              if (folderItem) folderItem.classList.remove('exporting');
+          }
+      }
+    }
   return {
     init: (ipcRendererInstance, domElements) => {
       _ipcRenderer = ipcRendererInstance;
@@ -213,31 +287,32 @@ const FileManager = (() => {
       fetchFoldersInternal();
     },
     performDeleteFolder: async (folderId) => {
-      // User confirmation
       if (!confirm(`Are you sure you want to delete folder (ID: ${folderId}) and all its contents? This action cannot be undone.`)) {
         return { success: false, error: "User cancelled deletion." }; 
       }
-      // Actual deletion logic
       const result = await _internalDeleteFolderLogic(folderId);
       if (result.success) {
         alert('Folder deleted successfully.');
       } else {
         alert(`Failed to delete folder: ${result.error}`);
       }
-      return result; // Return result for potential further handling
+      return result;
     },
     getFolders: async () => {
       const result = await _fetchFoldersData();
       return result.data;
+    },
+    exportFolderToCSV: async (folderId, folderName) => {
+      await _exportFolderToCSVInternal(folderId, folderName);
     }
   };
 })();
 
 
 
-function exportFolderToCSV(folderId) {
-  // TODO: Fetch data and export CSV
-}
+// function exportFolderToCSV(folderId) {
+//   // TODO: Fetch data and export CSV
+// }
 
 function renameFolder(folderId, currentName) {
   // TODO: add rename folder functionality
