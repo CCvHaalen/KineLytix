@@ -2,6 +2,8 @@
 
 ## Electron Setup Guide
 
+Follow these directions to quickly run and test the project.
+
 1. **Check Prerequisites**
    Make sure Node.js and npm are installed:
 
