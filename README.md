@@ -20,7 +20,15 @@ Create a Python environment to be used by the backend. Make sure [Python 3.11](h
 
 - Install dependencies
 
-    ```python3 -m pip install -r requirements.txt```
+    ```pip install -r requirements.txt```
+
+- Detect Django model changes
+
+    ```python manage.py makemigrations```
+
+- Apply Django model changes
+
+    ```python manage.py migrate```
 
 - Deactivate virtual Python environment
 
