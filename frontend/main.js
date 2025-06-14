@@ -347,6 +347,32 @@ ipcMain.handle('delete-data', async (event, endpoint) => {
   }
 });
 
+ipcMain.handle('update-data', async (event, endpoint, payload) => {
+  const url = `http://127.0.0.1:8000/${endpoint}`;
+  console.log(`Main: Received 'update-data' IPC. PATCH to ${url} with:`, payload);
+
+  try {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      timeout: 10000
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log("Main: Update successful:", data);
+    return { success: true, data };
+  } catch (error) {
+    console.error("Main: Update failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Handle video upload call to Django server
 
 const FormData = require('form-data');
