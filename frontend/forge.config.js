@@ -5,7 +5,7 @@ module.exports = {
   packagerConfig: {
     asar: true,
     extraResource: [
-      '../TNO-Backend'
+      '../backend'
     ]
   },
   rebuildConfig: {},

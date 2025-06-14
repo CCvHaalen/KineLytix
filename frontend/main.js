@@ -10,9 +10,9 @@ let mainWindow;
 function getBackendPath() {
     const isDev = !app.isPackaged;
     if (isDev) {
-        return path.join(__dirname, '..', 'TNO-Backend');
+        return path.join(__dirname, '..', 'backend');
     } else {
-        return path.join(process.resourcesPath, 'TNO-Backend');
+        return path.join(process.resourcesPath, 'backend');
     }
 }
 
@@ -24,8 +24,8 @@ async function startDjangoServer() {
         const backendPath = getBackendPath();
         const managePy = path.join(backendPath, 'manage.py');
         const venvPy = process.platform === 'win32'
-            ? path.join(backendPath, 'venv', 'Scripts', 'python.exe')
-            : path.join(backendPath, 'venv', 'bin', 'python');
+            ? path.join(backendPath, '.venv', 'Scripts', 'python.exe')
+            : path.join(backendPath, '.venv', 'bin', 'python');
 
         if (!fs.existsSync(managePy)) {
             console.error(`manage.py not found at ${managePy}`);
@@ -33,7 +33,7 @@ async function startDjangoServer() {
         }
         if (!fs.existsSync(venvPy)) {
             console.error(`Python executable not found at ${venvPy}`);
-            return reject(new Error(`Python executable not found at ${venvPy}. Ensure TNO-Backend/venv is correctly packaged.`));
+            return reject(new Error(`Python executable not found at ${venvPy}. Ensure backend/.venv is correctly packaged.`));
         }
 
         const logDir = app.getPath('userData');
