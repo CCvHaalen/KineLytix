@@ -274,6 +274,49 @@ const FileManager = (() => {
           }
       }
     }
+    async function renameFolder(folderId, currentName) {
+      const modal = document.getElementById('renameModal');
+      const input = document.getElementById('renameInput');
+      const cancelBtn = document.getElementById('cancelRenameBtn');
+      const confirmBtn = document.getElementById('confirmRenameBtn');
+
+      input.value = currentName;
+      modal.style.display = 'flex';
+
+      cancelBtn.onclick = () => {
+        modal.style.display = 'none';
+      };
+
+      confirmBtn.onclick = async () => {
+        const newName = input.value.trim();
+        modal.style.display = 'none';
+
+        if (!newName || newName === currentName) return;
+
+        console.log("Renaming folder", folderId, "to", newName);
+
+        try {
+          const result = await FileManager.invokeIpc(
+
+            'update-data',
+            `api/folders/${folderId}/`,
+            { name: newName }
+          );
+
+          console.log("Rename response:", result);
+
+          if (result.success) {
+            alert("Folder renamed successfully.");
+            window.FileManager.refreshNow();
+          } else {
+            alert(`Error: ${result.error || "Rename failed"}`);
+          }
+        } catch (error) {
+          console.error("Rename IPC error:", error);
+          alert("Rename failed due to an internal error.");
+        }
+      };
+}
   return {
     init: (ipcRendererInstance, domElements) => {
       _ipcRenderer = ipcRendererInstance;
@@ -304,7 +347,11 @@ const FileManager = (() => {
     },
     exportFolderToCSV: async (folderId, folderName) => {
       await _exportFolderToCSVInternal(folderId, folderName);
-    }
+    },
+    invokeIpc: async (...args) => {
+      if (!_ipcRenderer) throw new Error("IPC Renderer is not initialized");
+      return _ipcRenderer.invoke(...args);
+    },
   };
 })();
 
@@ -313,10 +360,6 @@ const FileManager = (() => {
 // function exportFolderToCSV(folderId) {
 //   // TODO: Fetch data and export CSV
 // }
-
-function renameFolder(folderId, currentName) {
-  // TODO: add rename folder functionality
-}
 
 async function deleteFolder(folderId) {
   if (window.FileManager && typeof window.FileManager.performDeleteFolder === 'function') {
