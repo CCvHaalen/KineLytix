@@ -1,0 +1,1008 @@
+
+
+/* Reset box sizing and remove default spacing */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Basic body styles */
+body {
+    display: flex;
+    font-family: 'Segoe UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    line-height: 1.6;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #f5f7fa;
+}
+
+/* Header styles */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.header-btn {
+  padding: 8px 14px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.header-btn:hover{
+  background-color: #2980b9;
+}
+
+.header-title {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  color: #34495e;
+}
+
+
+/* Layout container */
+.app-container {
+  display: flex;
+  flex-grow: 1;
+  height: 100%; /* vh & vw*/
+  width: 100%;
+}
+
+.toggle-sidebar {
+  width: 50px;
+  background-color: #e9ecef;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid #ccc;
+}
+.toggle-btn {
+  background: none;
+  border: none;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  width: 40px; 
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+}
+
+.toggle-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+}
+
+.toggle-btn:hover {
+  background-color: #d0d0d0;
+}
+
+.toggle-btn.active {
+  background-color: #c0c0c0; 
+}
+
+.toggle-btn.active svg {
+  stroke: #000; 
+}
+
+/* Sidebar styles */
+
+.sidebar {
+  width: 280px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-view {
+  display: none; 
+  flex-grow: 1; 
+  padding: 15px; 
+  overflow-y: auto;
+  height: 100%;
+}
+
+.sidebar-view.active-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-view {
+  display: none; 
+  flex-grow: 1; 
+  padding: 15px; 
+  overflow-y: auto;
+  height: 100%;
+}
+
+.sidebar-view.active-view {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.sidebar h2 {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+/* Instructions in sidebar */
+.sidebar-instructions {
+  padding: 15px 0;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Highlight drop zone when active */
+.sidebar.drop-zone {
+  background-color: #e1f0fa;
+}
+
+/* Wrapper for file import */
+.file-import {
+  margin: 15px 0;
+}
+
+/* Hide file input */
+#videoFileImport {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.video-item {
+  position: relative;
+  padding-right: 24px;
+}
+
+.video-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-small {
+  padding: 3px 6px;
+  font-size: 0.8em;
+  margin-left: 5px; 
+}
+
+.btn-save-to-db {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+}
+
+.btn-save-to-db:hover {
+  background-color: #218838; 
+}
+
+.delete-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  font-weight: bold;
+  color: #e74c3c;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: none;
+}
+
+.video-item:hover .delete-btn {
+  display: inline;
+}
+
+/* General drop zone style */
+.drop-zone {
+  border: 2px dashed #3498db;
+  background-color: #e1f0fa;
+  transition: all 0.3s ease;
+}
+
+/* Container for drop area */
+.drop-area-container {
+  margin: 15px 0;
+  min-height: 120px;
+}
+
+/* Actual drop area box */
+.drop-area {
+  border: 2px dashed #cedae0;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Hover state for drop area */
+.drop-area:hover {
+  background-color: #e9ecef;
+  border-color: #adbbc4;
+}
+
+/* Drop area when active */
+.drop-area.active {
+  border-color: #3498db;
+  background-color: #e1f0fa;
+}
+
+/* Inner content of drop instructions */
+.drop-instructions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+/* Icon inside drop area */
+.upload-icon {
+  color: #6c757d;
+  margin-bottom: 12px;
+}
+
+/* Change icon color on hover/active */
+.drop-area:hover .upload-icon,
+.drop-area.active .upload-icon {
+  color: #3498db;
+}
+
+/* Drop area text */
+.drop-area p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Small helper text */
+.drop-area .small-text {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #8a9299;
+}
+
+/* List of imported videos */
+.video-list {
+  list-style-type: none;
+  overflow-y: auto;
+  flex-grow: 1;
+  margin-top: 10px;
+}
+
+/* Header above video list */
+.video-list-header {
+  margin-top: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.video-list-header h3 {
+  font-size: 1.1rem;
+  color: #495057;
+  margin: 0;
+}
+
+/* Each video item */
+.video-list li {
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  background-color: #fff;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s;
+}
+
+/* Hover state for video list item */
+.video-list li:hover {
+  background-color: #f1f3f5;
+  border-left-color: #94c2e9;
+}
+
+/* Selected video item */
+.video-list li.active {
+  background-color: #e1f0fa;
+  border-left-color: #3498db;
+  font-weight: 500;
+}
+
+/* Empty list state */
+.video-list:empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  color: #adb5bd;
+  font-style: italic;
+}
+
+/* Placeholder for empty list */
+.video-list:empty::before {
+  content: "No videos imported yet";
+}
+
+/* Main content area */
+.main-content {
+  flex-grow: 1;
+  padding: 25px;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+}
+
+/* Video container */
+#video-container {
+  position: relative;
+  width: 100%;
+  max-height: 60%;
+  background-color: #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Message to show before a video is loaded */
+#placeholder-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  text-align: center;
+  padding: 40px;
+}
+
+/* Video element */
+#video {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+/* Overlay on top of video */
+#overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: none;
+  z-index: 2;
+  /* background-color: #FF0000;  For debugging  */
+}
+
+/* Enable pointer events when overlay is active */
+#overlay.active {
+  display: block;
+  pointer-events: auto;
+}
+
+
+/* Controls at the bottom */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 10px 0;
+}
+
+/* General button styling */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.btn:hover {
+  background-color: #dee2e6;
+}
+
+/* Primary button */
+.btn.primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #2980b9;
+}
+
+/* Display result area */
+.result-display {
+  flex: 1;
+  padding: 8px 15px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.frame-bar {
+  display: flex;
+  align-items: center; 
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px;
+  background: #eceff1;
+  margin-top: 12px;
+  flex-shrink: 0;
+  margin-top: 15px;
+}
+
+.frame-item {
+  position: relative;
+  max-width: 160px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.frame-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Add-frame button */
+.add-frame-btn {
+  max-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #f1f3f5;
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.add-frame-btn:hover {
+  background-color: #f1f3f5;
+  color: #3498db;
+  border-color: #3498db;
+}
+
+/* Jump to frame button */
+.frame-jump-button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #3498db;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.frame-jump-button:hover {
+  background-color: #2980b9;
+}
+
+/* Bar holding all frames */
+.frame-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 120px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px;
+  background: #eceff1;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+
+/* Frame item layout fixes */
+.frame-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.frame-item img {
+  width: 120px;
+  height: auto;
+  border-radius: 4px;
+}
+
+.frame-jump-button:hover {
+  background-color: #2980b9;
+}
+
+.frame-delete-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 16px;
+  padding: 0;
+}
+
+/* Playback speed control */
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#speedSlider {
+  width: 150px;
+}
+
+#speedValue {
+  min-width: 40px;
+  text-align: center;
+}
+
+  /* Button to delete a frame */
+.delete-btn {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+
+/* File Manager Styling  */
+
+.file-manager-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.video-list {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* #file-manager-view {
+
+} */
+ 
+#folderList {
+  list-style: none;
+  padding: 0;
+}
+
+#folderList li {
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+#folderList li:hover {
+  background-color: #f0f0f0;
+}
+
+.add-project-box {
+  margin-top: 10px;
+  padding: 12px;
+  text-align: center;
+  border: 2px dashed #ccc;
+  color: #3498db;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: #fdfdfd;
+  transition: all 0.2s ease;
+}
+
+.add-project-box:hover {
+  background-color: #e6f2ff;
+  border-color: #3498db;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h3 {
+  margin-bottom: 10px;
+}
+
+.modal-content input,
+.modal-content select.modal-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.folder-item {
+  position: relative;
+  padding-right: 30px;
+}
+
+.folder-actions {
+  position: absolute;
+  top: 0;
+  right: 5px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.folder-actions .dots {
+  display: none;
+  cursor: pointer;
+  padding: 3px 3px;
+  font-size: 18px;
+  user-select: none;
+}
+
+.folder-actions .action-menu {
+  position: absolute;
+  right: 0;
+  top: 22px;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.folder-actions .action-menu.hidden {
+  display: none;
+}
+
+.folder-actions .action-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.folder-actions .action-item:hover {
+  background-color: #f0f0f0;
+}
+
+.checkpoint-bar {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.checkpoint-bar h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.timeline-container {
+  display: flex;
+  margin: 15px 0;
+  width: 100%;
+  gap: 20px;
+}
+
+.timeline-section {
+  flex: 1;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 200px; /* Fixed height */
+  overflow: hidden; /* Hide any overflow from child elements */
+  position: relative; /* For positioning children */
+}
+
+.timeline-section h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Frame bar styles */
+.frame-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  align-content: flex-start;
+  padding-right: 5px;
+}
+
+/* Checkpoint list styles - horizontal layout */
+.checkpoint-list {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%; /* Take full width of parent */
+  flex-wrap: nowrap; /* Prevent wrapping */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling */
+  padding-bottom: 10px; /* Space for the scrollbar */
+  flex: 1;
+  scrollbar-width: thin; /* For Firefox */
+}
+
+/* Make sure checkpoints don't shrink */
+.checkpoint-item {
+  flex: 0 0 auto; /* Don't grow or shrink */
+  min-width: 100px; /* Minimum width */
+  max-width: 150px; /* Maximum width */
+  background-color: #e9ecef;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-right: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.checkpoint-item:hover {
+  background-color: #dee2e6;
+}
+
+.checkpoint-time {
+  font-weight: bold;
+  white-space: nowrap; /* Prevent time from wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkpoint-delete {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  margin-left: 5px;
+  flex-shrink: 0; /* Don't let delete button shrink */
+}
+
+/* Visible scrollbars */
+.checkpoint-list::-webkit-scrollbar {
+  height: 8px; /* Height of horizontal scrollbar */
+  width: 8px;
+}
+
+.checkpoint-list::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 10px;
+}
+
+.checkpoint-list::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal .grid-container{
+  display:grid;
+  grid-template-areas: 
+      'header header'
+      'main main';
+  grid-template-rows: auto 1fr;
+  min-height: 70vh;
+  max-width: 800px;
+  width: 100%;
+  height: auto;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal .header-login {
+  grid-area: header;
+  background: linear-gradient(to left, #002f86, gray);
+  color: white;
+  padding: 30px;
+  font-size: 40px;
+  font-weight: bold;
+  width: 100%;
+}
+
+.modal .main-login {
+  grid-area: main;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 30px 40px;
+  width: 100%;
+}   
+
+.modal .form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px 50px;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  max-width: 800px;
+}
+
+.modal .form-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.modal label{
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.modal input{
+  font-size: 12px;
+  padding: 6px;
+  max-width: 200px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.modal select{
+  font-size: 12px;
+  padding: 6px;
+  max-width: 200px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+} 
+
+.modal .submit-button {
+  grid-column: span 2;
+  justify-self: center;
+  margin-top: 30px;
+  padding: 2px 70px;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal .close-button {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.modal .close-button:hover,
+.modal .close-button:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
