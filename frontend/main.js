@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { Menu, app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { spawn } = require('child_process')
@@ -94,7 +94,7 @@ async function startDjangoServer() {
                 console.error('Dev server start timed out. Killing process.');
                 spawnedProcess.kill('SIGKILL');
                 reject(new Error('Dev server start timed out'));
-            }, 20000); // 20 seconds for dev server
+            }, 60000); // 20 seconds for dev server
 
             spawnedProcess.stdout.on('data', (chunk) => {
                 const output = chunk.toString();
@@ -461,9 +461,82 @@ app.on('window-all-closed', () => {
     }
 });
 
+// ABOUT MENU CODE BELOW
 
+//const { BrowserWindow, ipcMain } = require('electron');
+//const path = require('path');
 
+let aboutWindow = null;
 
+function createAboutWindow() {
+    if (aboutWindow) {
+        aboutWindow.focus();
+        return;
+    }
+
+    aboutWindow = new BrowserWindow({
+        width: 400,
+        height: 500,
+        title: 'About',
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        modal: true,
+        parent: BrowserWindow.getFocusedWindow(),
+        webPreferences: {
+            preload: path.join(__dirname, 'about.js'),
+        },
+    });
+
+    aboutWindow.loadFile('about.html');
+
+    aboutWindow.on('closed', () => {
+        aboutWindow = null;
+    });
+}
+
+//module.exports = { createAboutWindow };
+
+//const { Menu } = require('electron');
+//const { createAboutWindow } = require('./path/to/your/about-window-module'); // adjust as needed
+
+const isMac = process.platform === 'darwin';
+
+const template = [
+    // Mac: App menu
+    ...(isMac ? [{
+        label: app.name,
+        submenu: [
+            {
+                label: 'About',
+                click: createAboutWindow
+            },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' }
+        ]
+    }] : []),
+
+    // File menu (cross-platform)
+    {
+        label: 'File',
+        submenu: [
+            // Windows/Linux: About under File
+            ...(!isMac ? [{
+                label: 'About',
+                click: createAboutWindow
+            }] : []),
+            { role: isMac ? 'close' : 'quit' }
+        ]
+    },
+];
+
+const menu = Menu.buildFromTemplate(template);
+Menu.setApplicationMenu(menu);
+// END ABOUT CODE
 
 
 // const { app, BrowserWindow, ipcMain, dialog } = require('electron')
