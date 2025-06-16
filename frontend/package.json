@@ -1,7 +1,7 @@
 {
   "name": "tno-rom-project",
   "version": "1.0.0",
-  "description": "ROM Project for TNO",
+  "description": "Angle analysis tool for TNO",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -12,7 +12,7 @@
     "make": "electron-forge make"
   },
   "author": "TNO Team",
-  "license": "ISC",
+  "license": "BSD-4-Clause",
   "devDependencies": {
     "@electron-forge/cli": "7.8.1",
     "@electron-forge/maker-deb": "7.8.1",
