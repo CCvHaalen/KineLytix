@@ -1,3 +1,9 @@
+/*
+* This file is part of KineLytix.
+* Copyright (c) 2025, The KineLytix Contributors. All rights reserved.
+* Licensed under the BSD 4-Clause License. See the LICENSE file for details.
+*/
+
 const { Menu, app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
