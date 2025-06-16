@@ -10,6 +10,8 @@ const fs = require('fs')
 const { spawn } = require('child_process')
 const fetch = require('node-fetch');
 
+app.setName('KineLytix');
+
 let djangoServerProcess;
 let mainWindow;
 
