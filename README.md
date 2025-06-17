@@ -46,7 +46,7 @@ Building the frontend will automatically bundle the backend into the frontend if
 
 - Install Node with nvm
 
-    ```nvm install```, for windows download Node.js installer from the download link
+    ```nvm install```, for windows download Node.js installer from the [download link](https://nodejs.org/en/download/)
 
 - Verify the Node.js and npm versions
 
