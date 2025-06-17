@@ -797,9 +797,9 @@ h2 {
   padding: 10px;
   display: flex;
   flex-direction: column;
-  height: 200px; /* Fixed height */
-  overflow: hidden; /* Hide any overflow from child elements */
-  position: relative; /* For positioning children */
+  height: 200px; 
+  overflow: hidden; 
+  position: relative; 
 }
 
 .timeline-section h4 {
@@ -825,20 +825,20 @@ h2 {
   display: flex;
   flex-direction: row;
   gap: 10px;
-  width: 100%; /* Take full width of parent */
-  flex-wrap: nowrap; /* Prevent wrapping */
-  overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: hidden; /* Prevent vertical scrolling */
-  padding-bottom: 10px; /* Space for the scrollbar */
+  width: 100%; 
+  flex-wrap: nowrap; 
+  overflow-x: auto; 
+  overflow-y: hidden; 
+  padding-bottom: 10px; 
   flex: 1;
   scrollbar-width: thin; /* For Firefox */
 }
 
 /* Make sure checkpoints don't shrink */
 .checkpoint-item {
-  flex: 0 0 auto; /* Don't grow or shrink */
-  min-width: 100px; /* Minimum width */
-  max-width: 150px; /* Maximum width */
+  flex: 0 0 auto; 
+  min-width: 100px; 
+  max-width: 150px; 
   background-color: #e9ecef;
   border-radius: 4px;
   padding: 8px 12px;
@@ -856,7 +856,7 @@ h2 {
 
 .checkpoint-time {
   font-weight: bold;
-  white-space: nowrap; /* Prevent time from wrapping */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -870,7 +870,7 @@ h2 {
   padding: 2px 6px;
   border-radius: 50%;
   margin-left: 5px;
-  flex-shrink: 0; /* Don't let delete button shrink */
+  flex-shrink: 0; 
 }
 
 /* Visible scrollbars */
