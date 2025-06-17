@@ -2,7 +2,6 @@ from rest_framework import viewsets, permissions, parsers
 from .models import Folder, Video
 from .serializers import FolderSerializer, VideoSerializer, FolderWithVideosSerializer
 import logging
-# Create your views here.
 
 logger = logging.getLogger(__name__)
 
