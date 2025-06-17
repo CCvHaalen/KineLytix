@@ -137,7 +137,7 @@ function init() {
   setupNewProjectModal();
   setupLoginModal();
   setupSaveToDbModal();
-  testFetchData();
+  //testFetchData();
 
   elements.toggleBtn = document.getElementById('toggleAngleType');
   elements.toggleVideoLibraryBtn = document.getElementById('toggleVideoLibrary');
@@ -666,7 +666,10 @@ function updateVideoList() {
     elements.videoList.appendChild(li);
   });
 }
-
+/**
+ * Deletes a video from the state.videoFiles array at the specified index.
+ * @param {number} index - The position of the video in state.videoFiles to delete.
+ */
 function deleteVideo(index) {
   if (index < 0 || index >= state.videoFiles.length) return;
 
@@ -912,81 +915,6 @@ function drawPointsAndLines() {
     drawAngleArc(state.points, displayed, state.showInnerAngle);
   }
 }
-
-/**
- * Clears the canvas, converts relative point coordinates to absolute positions, draws each point and connecting lines,
- * and if three points are present, calculates and draws the measured angle arc.
- */
-/*
-function drawAnnotations() {
-  ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-  
-  if (state.points.length === 0) return;
-
-  const absPoints = state.points.map(p => ({
-    x: p.xRel * elements.canvas.width,
-    y: p.yRel * elements.canvas.height
-  }));
- 
-  absPoints.forEach((pt, index) => {
-    drawPoint(pt.x, pt.y, index + 1);
-  });
-  
-  if (absPoints.length >= 2) {
-    drawLine(absPoints[0], absPoints[1]);
-  }
-  
-  if (absPoints.length === 3) {
-    drawLine(absPoints[1], absPoints[2]);
-    
-    const angleDeg = calculateAngle(absPoints[0], absPoints[1], absPoints[2]);
-    drawAngleArc(absPoints, angleDeg);
-  }
-}
-*/
-
-/**
- * Draws a labeled point on the canvas using concentric circles with different styles and places a number at its
- * center to indicate its order or identifier
- * @param {number} x X-coordinate of the point on the canvas
- * @param {number} y Y-coordinate of the point on the canvas
- * @param {number} number Label number to display inside the point
- */
-/*
-function drawPoint(x, y, number) {
-  ctx.fillStyle = 'rgba(52, 152, 219, 0.6)';
-  ctx.beginPath();
-  ctx.arc(x, y, 8, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  ctx.fillStyle = '#3498db';
-  ctx.beginPath();
-  ctx.arc(x, y, 5, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  ctx.fillStyle = 'white';
-  ctx.font = '9px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(number.toString(), x, y);
-}
-*/
-
-/**
- * Draws a blue line with a width of 2 pixels connecting two given points on the canvas
- * @param {object} p1 First point with { x, y } coordinates
- * @param {object} p2 Second point with { x, y } coordinates
- */
-/*
-function drawLine(p1, p2) {
-  ctx.strokeStyle = '#3498db';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.stroke();
-}
-*/
 
 /**
  * Calculates the direction of the angle at the middle point (p2) between three points and draws a red arc
@@ -1525,6 +1453,10 @@ function handleCanvasMouseUp() {
 }
 
 init();
+
+/**
+ * Stores data from the loginForm modal
+ */
 
 const loginForm = document.getElementById('loginForm');
 loginForm.addEventListener('submit', e => {
