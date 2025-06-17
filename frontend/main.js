@@ -4,6 +4,19 @@
 * Licensed under the BSD 4-Clause License. See the LICENSE file for details.
 */
 
+/**
+ * KineLytix Main Process
+ * 
+ * This is the main Electron process that manages the desktop application.
+ * It handles:
+ * - Starting and stopping the Django backend server
+ * - Creating and managing the main application window
+ * - IPC communication between frontend and backend
+ * - Application lifecycle events
+ * - File uploads and API requests
+ */
+
+
 const { Menu, app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
@@ -15,6 +28,10 @@ app.setName('KineLytix');
 let djangoServerProcess;
 let mainWindow;
 
+/**
+ * Determines the correct path to the Django backend based on development/production mode
+ * @returns {string} Path to the backend directory
+ */
 function getBackendPath() {
     const isDev = !app.isPackaged;
     if (isDev) {
@@ -25,6 +42,11 @@ function getBackendPath() {
 }
 
 const sleep = ms => new Promise(res => setTimeout(res, ms));
+/**
+ * Starts the Django backend server
+ * Handles both development (manage.py runserver) and production (waitress) modes
+ * @returns {Promise} Resolves when server is ready, rejects on failure
+ */
 async function startDjangoServer() {
     return new Promise(async (resolve, reject) => {
         const backendPath = getBackendPath();
@@ -166,7 +188,9 @@ async function startDjangoServer() {
         reject(new Error('Production server start timed out after health checks. Check backend.log.'));
     });
 }
-
+/**
+ * Stops the Django backend server
+ */
 function stopDjangoServer() {
     return new Promise((resolve) => {
         if (djangoServerProcess) {
@@ -207,7 +231,10 @@ function stopDjangoServer() {
         }
     });
 }
-
+/**
+ * Creates and configures the main application window
+ * Also handles Django server startup before showing the window
+ */
 const createWindow = async () => {
     mainWindow = new BrowserWindow({
         width: 1280,
@@ -241,7 +268,10 @@ const createWindow = async () => {
         mainWindow = null;
     });
 };
-
+/**
+ * IPC Handler: Fetch data from Django backend
+ * Handles GET requests to specified endpoints
+ */
 ipcMain.handle('fetch-data', async (event, endpoint) => {
     const url = `http://127.0.0.1:8000/${endpoint}`;
     console.log(`Main: Received 'fetch-data' IPC. Endpoint: '${endpoint}', Target URL: ${url}`);
@@ -277,7 +307,10 @@ ipcMain.handle('fetch-data', async (event, endpoint) => {
         return { success: false, error: err.message };
     }
 });
-
+/**
+ * IPC Handler: Send POST data to Django backend
+ * Handles POST requests with JSON payloads
+ */
 ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
     const url = `http://127.0.0.1:8000/${endpoint}`;
     console.log(`Main: Received 'post-data' IPC. Endpoint: '${endpoint}', Payload:`, payload, `Target URL: ${url}`);
@@ -309,7 +342,10 @@ ipcMain.handle('post-data', async (event, { endpoint, payload }) => {
         return { success: false, error: err.message };
     }
 });
-
+/**
+ * IPC Handler: Delete data from Django backend
+ * Handles DELETE requests to specified endpoints
+ */
 ipcMain.handle('delete-data', async (event, endpoint) => {
   const backendBaseUrl = 'http://127.0.0.1:8000/';
   const targetUrl = `${backendBaseUrl}${endpoint}`;
@@ -342,7 +378,10 @@ ipcMain.handle('delete-data', async (event, endpoint) => {
     return { success: false, error: error.message || 'Network error or server unreachable' };
   }
 });
-
+/**
+ * IPC Handler: Update data in Django backend
+ * Handles PATCH requests with JSON payloads
+ */
 ipcMain.handle('update-data', async (event, endpoint, payload) => {
   const url = `http://127.0.0.1:8000/${endpoint}`;
   console.log(`Main: Received 'update-data' IPC. PATCH to ${url} with:`, payload);
@@ -370,7 +409,10 @@ ipcMain.handle('update-data', async (event, endpoint, payload) => {
 });
 
 const FormData = require('form-data');
-
+/**
+ * IPC Handler: Upload video files to Django backend
+ * Handles multipart form data uploads with metadata
+ */
 ipcMain.handle('upload-video', async (event, payload) => {
   const url = 'http://127.0.0.1:8000/api/videos/';
   console.log(`Main: Received 'upload-video' IPC. Uploading video: '${payload.title}'`);
