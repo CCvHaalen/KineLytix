@@ -1,6 +1,6 @@
 # KineLytix
 
-## Build Instructions (MacOS/Linux)
+## Build Instructions (MacOS/Linux/Windows)
 
 ### Prepare Backend
 
@@ -12,11 +12,11 @@ Create a Python environment to be used by the backend. Make sure [Python 3.11](h
 
 - Create a virtual Python environment
 
-    ```python3 -m venv .venv```
+    ```python3 -m venv .venv``` or ```python -m venv .venv```
 
 - Activate the environment
 
-    ```source .venv/bin/activate```
+    Mac/Linux ```source .venv/bin/activate```, for Windows ```.venv/Scripts/activate```
 
 - Install dependencies
 
@@ -46,9 +46,12 @@ Building the frontend will automatically bundle the backend into the frontend if
 
 - Install Node with nvm
 
-    ```nvm install```
+    ```nvm install```, for windows download Node.js installer from the download link
 
-- Activate correct Node version
+- Verify the Node.js and npm versions
+    ```node -v``` and ```npm -v```
+
+- Activate correct Node version (MacOs/Linux)
 
     ```nvm use```
 
